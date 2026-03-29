@@ -150,8 +150,8 @@ export default function PainelPage() {
                     <div className="md:text-right flex-shrink-0">
                       <div className="text-xs text-ink-400">Valor estimado</div>
                       <div className="text-xl font-extrabold text-brand-400">
-                        {q.total_price
-                          ? `R$ ${Number(q.total_price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                        {q.total_price || q.price
+                          ? `R$ ${Number(q.total_price || q.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
                           : "—"}
                       </div>
                       <div className="text-xs text-ink-400">

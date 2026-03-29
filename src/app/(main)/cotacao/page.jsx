@@ -17,7 +17,7 @@ export default function CotacaoPage() {
     from: "", to: "", fromLat: "", fromLon: "", toLat: "", toLon: "",
     date: "", returnDate: "", passengers: "", notes: ""
   });
-  
+
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -53,11 +53,11 @@ export default function CotacaoPage() {
             Sua cotação oficial foi disparada com sucesso para nossa central.
           </p>
           <p className="text-ink-400 mb-8 text-sm">
-            Nossa equipe entrará em contato pelo WhatsApp/e-mail em até <strong>2 horas</strong> com o fechamento e confirmação de disponibilidade da sua van de luxo.
+            Nossa equipe entrará em contato pelo WhatsApp/e-mail em até <strong>12 horas</strong> com o fechamento e confirmação de disponibilidade .
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/painel" className="btn-primary py-3">Meu Painel</Link>
-            <button onClick={() => { setSubmitted(false); setForm({ from:"",to:"",fromLat:"",fromLon:"",toLat:"",toLon:"",date:"",returnDate:"",passengers:"",notes:""}); }}
+            <button onClick={() => { setSubmitted(false); setForm({ from: "", to: "", fromLat: "", fromLon: "", toLat: "", toLon: "", date: "", returnDate: "", passengers: "", notes: "" }); }}
               className="btn-outline py-3 text-brand-400 border-brand-500/30 hover:bg-brand-500/10">
               Nova Viagem
             </button>
@@ -102,7 +102,7 @@ export default function CotacaoPage() {
       } else if (tipo === "in" || tipo === "out") {
         basePrice = distancia * 7.50;
       } else {
-        basePrice = distancia * 5; 
+        basePrice = distancia * 5;
       }
 
       // 3. Persistência na Nuvem - Insere Cotação Oficial
@@ -219,7 +219,7 @@ export default function CotacaoPage() {
 
             <div className="pt-6 border-t border-white/10 flex justify-end">
               <button type="submit" disabled={loading} className="btn-primary py-4 px-10 text-base font-bold flex items-center justify-center gap-3 w-full md:w-auto shadow-[0_0_20px_rgba(36,204,78,0.2)] hover:shadow-[0_0_30px_rgba(36,204,78,0.4)]">
-                {loading ? <Loader2 size={20} className="animate-spin text-dark-400" /> : <><Send size={20} /> Enviar Cotação Oficial</>}
+                {loading ? <Loader2 size={20} className="animate-spin text-dark-400" /> : <><Send size={20} /> Enviar Cotação</>}
               </button>
             </div>
           </form>
