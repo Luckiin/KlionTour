@@ -10,13 +10,13 @@ import { APP_NAME } from "@/lib/constants";
 // Redirect de usuário já logado é feito pelo middleware antes de chegar aqui.
 export default function LoginPage() {
   const { login } = useAuth();
-  const router    = useRouter();
+  const router = useRouter();
 
-  const [email,    setEmail]    = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
-  const [error,    setError]    = useState("");
-  const [loading,  setLoading]  = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -105,13 +105,6 @@ export default function LoginPage() {
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-base mt-2">
               {loading ? "Entrando..." : "Entrar"}
             </button>
-
-            {/* Demo hint */}
-            <div className="text-xs text-ink-400 bg-dark-300 rounded-lg p-3 space-y-1">
-              <p className="font-medium text-ink-300">Contas de demonstração:</p>
-              <p>Admin: <span className="font-mono">admin@kliontour.com.br</span> / <span className="font-mono">admin123</span></p>
-              <p>Cliente: <span className="font-mono">joao@email.com</span> / <span className="font-mono">123456</span></p>
-            </div>
           </form>
 
           <p className="text-center text-sm text-ink-300 mt-5">

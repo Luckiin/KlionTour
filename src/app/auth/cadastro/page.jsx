@@ -174,4 +174,96 @@ export default function RegisterPage() {
                     <label className="block text-sm font-medium text-ink-200 mb-1.5">WhatsApp</label>
                     <div className="relative">
                       <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
-                      <input type="tel" value={form.celular} onChange={(e) => update("celular", maskPhone(e.target.value))} className="inp
+                      <input type="tel" value={form.celular} onChange={(e) => update("celular", maskPhone(e.target.value))} className="input-field input-icon" placeholder="(00) 00000-0000" />
+                    </div>
+                  </div>
+
+                  {/* Campo Documento */}
+                  <div>
+                    <label className="block text-sm font-medium text-ink-200 mb-1.5">Documento {form.isEmpresa ? "(CNPJ)" : "(CPF)"}</label>
+                    <div className="relative">
+                      <FileText size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+                      <input type="text" value={form.documento} onChange={(e) => update("documento", form.isEmpresa ? maskCNPJ(e.target.value) : maskCPF(e.target.value))} className="input-field input-icon" placeholder={form.isEmpresa ? "00.000.000/0000-00" : "000.000.000-00"} />
+                    </div>
+                  </div>
+
+                  {/* Endereço Inteligente */}
+                  <div className="md:col-span-2 relative">
+                    <label className="block text-sm font-medium text-ink-200 mb-1.5">Endereço Principal</label>
+                    <div className="relative">
+                      <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+                      <input type="text" value={form.endereco} onChange={(e) => { update("endereco", e.target.value); setIsSearching(false); }} onFocus={() => setIsSearching(false)} className="input-field input-icon" placeholder="Ex: Av Paulista, 1000..." />
+                    </div>
+                    {/* Autocomplete */}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <ul className="absolute z-50 w-full mt-1 bg-dark-200 border border-white/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                        {suggestions.map((item, idx) => (
+                          <li key={idx}>
+                            <button type="button" onClick={() => selectSuggestion(item)} className="w-full text-left px-4 py-3 text-sm text-ink-200 hover:bg-brand-500/20 hover:text-white border-b border-white/5 last:border-0 transition flex flex-col items-start gap-1">
+                              <div className="flex items-start gap-2">
+                                <MapPin size={14} className="text-ink-400 mt-0.5 shrink-0" />
+                                <span className="font-semibold text-white truncate">{item.display_name.split(',')[0]}</span>
+                              </div>
+                              <span className="text-xs text-ink-300 ml-5">{item.display_name}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Complementos de Endereço */}
+                  <div>
+                    <label className="block text-sm font-medium text-ink-200 mb-1.5">Cidade</label>
+                    <div className="relative">
+                      <Building2 size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+                      <input type="text" value={form.cidade} onChange={(e) => update("cidade", e.target.value)} className="input-field input-icon" placeholder="Cidade" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-ink-200 mb-1.5">Estado / CEP</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={form.estado} onChange={(e) => update("estado", e.target.value)} className="input-field w-1/3 text-center uppercase" placeholder="UF" maxLength={2} />
+                      <input type="text" value={form.cep} onChange={(e) => update("cep", maskCEP(e.target.value))} className="input-field w-2/3" placeholder="00000-000" />
+                    </div>
+                  </div>
+
+                  {/* Senha */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-ink-200 mb-1.5">Sua Senha</label>
+                    <div className="relative">
+                      <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
+                      <input type={showPass ? "text" : "password"} value={form.senha} onChange={(e) => update("senha", e.target.value)} className="input-field input-icon" placeholder="••••••••" />
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-400 hover:text-brand-400 transition">
+                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Empresa Checkbox */}
+                  <div className="md:col-span-2 flex items-center gap-2 mt-2">
+                    <input type="checkbox" id="isEmpresa" checked={form.isEmpresa} onChange={(e) => update("isEmpresa", e.target.checked)} className="rounded border-ink-400 text-brand-500 focus:ring-brand-500 w-4 h-4 bg-transparent" />
+                    <label htmlFor="isEmpresa" className="text-sm font-medium text-ink-200 cursor-pointer">Sou uma empresa (Pessoa Jurídica)</label>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button type="submit" disabled={loading} className="btn-primary w-full py-3.5 text-base flex justify-center items-center gap-2 shadow-lg hover:shadow-brand-500/25">
+                    {loading ? <Loader2 className="animate-spin" size={20} /> : "Criar minha conta"}
+                  </button>
+                </div>
+
+                <div className="text-center mt-6">
+                  <p className="text-sm text-ink-300">
+                    Já tem uma conta? <Link href="/auth/entrar" className="text-brand-400 hover:text-brand-300 font-bold transition">Faça login aqui</Link>
+                  </p>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
