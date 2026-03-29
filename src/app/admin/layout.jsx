@@ -76,7 +76,7 @@ export default function AdminLayout({ children }) {
               <div className="text-xs text-ink-400 truncate">{user.email}</div>
             </div>
           </div>
-          <button onClick={() => { logout(); router.push("/"); }}
+          <button onClick={async () => { await logout(); window.location.href = "/"; }}
             className="flex items-center gap-2 text-sm text-ink-400 hover:text-red-400 px-3 py-2 rounded-lg hover:bg-red-900/20 w-full transition">
             <LogOut size={16} /> Sair do admin
           </button>
