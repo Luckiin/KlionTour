@@ -8,7 +8,7 @@ export async function getAllQuotes() {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("quotes")
-    .select("*, motorista:motoristas(id, nome_completo), veiculo:veiculos(id, placa, modelo)")
+    .select("*")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data;
