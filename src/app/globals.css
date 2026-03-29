@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #131f18;
+    color: #e4f0ea;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0c1610; }
+  ::-webkit-scrollbar-thumb { background: #2d4437; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #30b27f; }
+}
+
+@layer components {
+  /* Botões */
+  .btn-primary {
+    @apply bg-brand-500 text-white px-6 py-2.5 rounded-xl font-medium
+           hover:bg-brand-600 active:bg-brand-700 transition-colors
+           disabled:opacity-40 disabled:cursor-not-allowed
+           flex items-center justify-center gap-2;
+  }
+  .btn-outline {
+    @apply border border-dark-50 text-ink-300 px-6 py-2.5 rounded-xl font-medium
+           hover:bg-dark-100 hover:text-ink-100 transition-colors
+           flex items-center justify-center gap-2;
+  }
+  .btn-ghost {
+    @apply text-ink-300 px-4 py-2 rounded-lg font-medium
+           hover:bg-dark-100 hover:text-ink-100 transition-colors
+           flex items-center justify-center gap-2;
+  }
+
+  /* Inputs */
+  .input-field {
+    @apply w-full px-4 py-2.5 rounded-xl text-sm
+           bg-dark-300 border border-dark-50
+           text-ink-100 placeholder:text-ink-400
+           focus:ring-2 focus:ring-brand-500 focus:border-brand-500
+           outline-none transition;
+  }
+  .input-icon { @apply pl-10; }
+
+  /* Cards */
+  .card {
+    @apply bg-dark-200 rounded-2xl border border-dark-50;
+  }
+
+  /* Tipografia */
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold text-ink-100;
+  }
+
+  /* Badge */
+  .badge {
+    @apply text-xs font-medium px-2.5 py-0.5 rounded-full border;
+  }
+
+  /* Header de página */
+  .page-header {
+    @apply bg-dark-400 border-b border-dark-50 py-10;
+  }
+}
