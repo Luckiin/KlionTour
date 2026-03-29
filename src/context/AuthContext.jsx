@@ -51,7 +51,15 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    return data.user;
+    
+    // Busca imediatamente a role para podermos redirecionar para a tela certa
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", data.user.id)
+      .single();
+      
+    return { ...data.user, role: profile?.role };
   };
 
   // ─── Cadastro ─────────────────────────────────────────────
