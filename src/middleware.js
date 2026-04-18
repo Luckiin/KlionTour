@@ -49,7 +49,7 @@ export async function middleware(request) {
       .from("users")
       .select("role")
       .eq("auth_id", user.id)
-      .single();
+      .maybeSingle();
     role = profile?.role ?? "client";
   }
 

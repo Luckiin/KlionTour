@@ -22,7 +22,7 @@ export async function getProfileByAuthId(authId) {
     .from("users")
     .select("*")
     .eq("auth_id", authId)
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -35,7 +35,7 @@ export async function updateProfile(id, updates) {
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
   if (error) throw new Error(error.message);
   return data;
 }

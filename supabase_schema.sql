@@ -247,6 +247,10 @@ create policy "users: client updates own"
   on public.users for update
   using (auth_id = auth.uid());
 
+create policy "users: client inserts own"
+  on public.users for insert
+  with check (auth_id = auth.uid());
+
 -- ── quotes ───────────────────────────────────────────────────
 create policy "quotes: admin full access"
   on public.quotes for all

@@ -25,6 +25,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(email, password);
+      router.refresh(); // Sincroniza cookies/middleware
       router.push(user.role === "admin" ? "/admin" : "/painel");
     } catch (err) {
       setError(err.message);

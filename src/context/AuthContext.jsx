@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
       .from("users")
       .select("*")
       .eq("auth_id", authUser.id)
-      .single();
+      .maybeSingle();
 
     setUser(profile ?? null);
   }, [supabase]);
@@ -52,14 +52,17 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
     
-    // Busca imediatamente a role para podermos redirecionar para a tela certa
+    // Busca imediatamente o perfil completo para atualizar o estado local antes do redirect
     const { data: profile } = await supabase
       .from("users")
-      .select("role")
+      .select("*")
       .eq("auth_id", data.user.id)
-      .single();
+      .maybeSingle();
       
-    return { ...data.user, role: profile?.role };
+    const fullUser = { ...data.user, ...profile };
+    setUser(profile ? fullUser : data.user); // Garante que o estado 'user' esteja pronto
+    
+    return fullUser;
   };
 
   // ─── Cadastro ─────────────────────────────────────────────
@@ -91,6 +94,16 @@ export function AuthProvider({ children }) {
       estado:     estado   ?? null,
     });
     if (profileError) throw new Error(profileError.message);
+
+    // 3. Busca o perfil recém-criado para atualizar o estado local
+    const { data: profile } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", authUser.id)
+      .maybeSingle();
+
+    const fullUser = { ...authUser, ...profile };
+    setUser(fullUser);
 
     return authUser;
   };

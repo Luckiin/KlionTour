@@ -94,6 +94,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form);
+      router.refresh(); // Sincroniza cookies/middleware
       router.push("/painel");
     } catch (err) {
       setError(err.message || "Erro ao criar conta");
