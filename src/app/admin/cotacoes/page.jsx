@@ -190,27 +190,31 @@ export default function AdminCotacoesPage() {
                         className="input-field resize-none text-sm"
                         placeholder="Ex: Confirmado para às 7h, motorista Carlos. Pagamento via PIX..." />
                     </div>
-                    {selected.status === "pending" && (
+                    {selected.status === "pending" || selected.status === "negotiating" ? (
                       <div className="flex gap-3">
                         <button disabled={saving}
-                          onClick={() => handleAction(selected.id, {
-                            status:      "approved",
-                            admin_notes: adminNote || selected.admin_notes,
-                            total_price: newPrice ? Number(newPrice) : selected.total_price,
-                          })}
+                          onClick={() => {
+                            const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                            const newFullNote = `[Admin ${now}]: ${adminNote || "Proposta enviada."}${selected.admin_notes ? "\n\n" + selected.admin_notes : ""}`;
+                            handleAction(selected.id, {
+                              status:      "proposed",
+                              admin_notes: newFullNote,
+                              total_price: newPrice ? Number(newPrice) : selected.total_price,
+                            });
+                          }}
                           className="btn-primary flex-1 disabled:opacity-50">
-                          <CheckCircle size={16} /> {saving ? "Salvando..." : "Aprovar"}
+                          <CheckCircle size={16} /> {saving ? "Salvando..." : "Enviar Proposta"}
                         </button>
                         <button disabled={saving}
                           onClick={() => handleAction(selected.id, {
                             status:      "rejected",
-                            admin_notes: adminNote || "Cotação recusada.",
+                            admin_notes: `[Admin]: Recusado. ${adminNote}`,
                           })}
                           className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
                           <X size={16} /> Recusar
                         </button>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 )}
 

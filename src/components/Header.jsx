@@ -53,11 +53,8 @@ export default function Header() {
       <div className={`container-x flex items-center justify-between transition-all duration-500 ${scrolled ? "h-16" : "h-20"}`}>
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-900 shadow-soft flex items-center justify-center overflow-hidden">
-              <span className="font-serif text-white text-lg leading-none">K</span>
-              <span className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </div>
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-900 flex items-center justify-center">
+            <span className="font-serif text-white text-lg leading-none">K</span>
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-serif text-lg tracking-tight text-brand-900 dark:text-white">
