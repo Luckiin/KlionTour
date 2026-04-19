@@ -58,9 +58,9 @@ export default function CityInput({ label, value, onChange, onCoordinateSelect, 
 
   return (
     <div className="relative" ref={ref}>
-      {label && <label htmlFor={id} className="block text-sm font-medium text-ink-200 mb-1.5">{label}</label>}
+      {label && <label htmlFor={id} className="block text-sm font-medium text-brand-900 dark:text-white mb-1.5">{label}</label>}
       <div className="relative">
-        <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
+        <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-steel-500 pointer-events-none" />
         <input
           id={id}
           type="text"
@@ -72,25 +72,25 @@ export default function CityInput({ label, value, onChange, onCoordinateSelect, 
           autoComplete="off"
         />
         {loading && (
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none">
+          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-steel-500 pointer-events-none">
             <Loader2 size={16} className="animate-spin" />
           </div>
         )}
       </div>
       {open && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-dark-200 border border-white/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-surface-dark-elevated border border-surface-border dark:border-surface-dark-border rounded-2xl shadow-soft-lg max-h-60 overflow-y-auto">
           {suggestions.map((item, idx) => (
             <li key={idx}>
               <button
                 type="button"
                 onClick={() => handleSelect(item)}
-                className="w-full text-left px-4 py-3 text-sm text-ink-200 hover:bg-brand-500/20 hover:text-white border-b border-white/5 last:border-0 transition flex flex-col items-start"
+                className="w-full text-left px-4 py-3 text-sm hover:bg-brand-500/10 dark:hover:bg-brand-300/10 border-b border-surface-border dark:border-surface-dark-border last:border-0 transition flex flex-col items-start"
               >
                 <div className="flex items-center gap-2 w-full">
-                  <MapPin size={14} className="text-ink-400 shrink-0" /> 
-                  <span className="font-semibold text-white truncate">{item.display_name.split(',')[0]}</span>
+                  <MapPin size={14} className="text-brand-500 shrink-0" />
+                  <span className="font-semibold text-brand-900 dark:text-white truncate">{item.display_name.split(',')[0]}</span>
                 </div>
-                <span className="text-xs text-ink-300 ml-5 truncate w-[90%]">{item.display_name}</span>
+                <span className="text-xs text-steel-500 dark:text-steel-400 ml-5 truncate w-[90%]">{item.display_name}</span>
               </button>
             </li>
           ))}

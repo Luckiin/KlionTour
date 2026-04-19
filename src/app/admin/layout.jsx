@@ -1,25 +1,29 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import { ShieldAlert, Menu, Search, Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { Truck, LayoutDashboard, FileText, DollarSign, LogOut, ShieldAlert, Users, Settings, UserCheck, Bus } from "lucide-react";
-import { APP_NAME } from "@/lib/constants";
-import { useEffect } from "react";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import ThemeToggle from "@/components/ThemeToggle";
 
-const NAV = [
-  { href: "/admin",             icon: <LayoutDashboard size={18} />, label: "Visão Geral"  },
-  { href: "/admin/cotacoes",    icon: <FileText size={18} />,        label: "Cotações"     },
-  { href: "/admin/financeiro",  icon: <DollarSign size={18} />,      label: "Financeiro"   },
-  { href: "/admin/clientes",    icon: <Users size={18} />,            label: "Clientes"     },
-  { href: "/admin/motoristas",  icon: <UserCheck size={18} />,        label: "Motoristas"   },
-  { href: "/admin/veiculos",    icon: <Bus size={18} />,              label: "Veículos"     },
-];
+const TITLES = {
+  "/admin":             { label: "Visão geral",  eyebrow: "Dashboard" },
+  "/admin/cotacoes":    { label: "Cotações",     eyebrow: "Operação"  },
+  "/admin/financeiro":  { label: "Financeiro",   eyebrow: "Números"   },
+  "/admin/clientes":    { label: "Clientes",     eyebrow: "Pessoas"   },
+  "/admin/motoristas":  { label: "Motoristas",   eyebrow: "Equipe"    },
+  "/admin/veiculos":    { label: "Veículos",     eyebrow: "Frota"     },
+};
 
 export default function AdminLayout({ children }) {
   const { user, logout, isAdmin, loading } = useAuth();
   const pathname = usePathname();
   const router   = useRouter();
+
+  const [collapsed, setCollapsed]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -27,65 +31,89 @@ export default function AdminLayout({ children }) {
     }
   }, [user, isAdmin, loading, router]);
 
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/";
+  };
+
   if (loading || !user || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-dark-400">
-        <div className="text-white text-center">
-          <ShieldAlert size={48} className="mx-auto mb-3 text-ink-400" />
-          <p className="text-ink-400">Verificando permissões...</p>
+      <div className="min-h-screen flex items-center justify-center bg-surface dark:bg-surface-dark">
+        <div className="text-center">
+          <ShieldAlert size={44} className="mx-auto mb-3 text-steel-500" />
+          <p className="text-steel-500 text-sm">Verificando permissões…</p>
         </div>
       </div>
     );
   }
 
+  const title = TITLES[pathname] || { label: "Admin", eyebrow: "KlionTour" };
+  const contentOffset = collapsed ? "lg:pl-[88px]" : "lg:pl-72";
+
   return (
-    <div className="flex min-h-screen bg-dark-300">
-      {/* Sidebar */}
-      <aside className="w-64 bg-dark-400 text-ink-100 flex flex-col fixed inset-y-0 left-0 z-40 shadow-xl">
-        <div className="p-5 border-b border-dark-50">
-          <Link href="/admin" className="flex items-center gap-2">
-            <div className="bg-brand-500 text-white p-2 rounded-xl"><Truck size={20} /></div>
-            <div>
-              <div className="text-white font-bold text-sm">{APP_NAME}</div>
-              <div className="text-xs text-ink-400">Painel Administrativo</div>
-            </div>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-surface dark:bg-surface-dark text-brand-900 dark:text-white">
+      <AdminSidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        user={user}
+        onLogout={handleLogout}
+      />
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {NAV.map(item => (
-            <Link key={item.href} href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition ${
-                pathname === item.href
-                  ? "bg-brand-500 text-white shadow"
-                  : "text-ink-300 hover:bg-dark-200 hover:text-white"
-              }`}>
-              {item.icon} {item.label}
-            </Link>
-          ))}
-        </nav>
+      <div className={`transition-all duration-500 ${contentOffset}`}>
+        {/* Topbar sticky */}
+        <header className="sticky top-0 z-30 backdrop-blur-xl bg-surface/75 dark:bg-surface-dark/75 border-b border-surface-border dark:border-surface-dark-border">
+          <div className="h-20 px-5 md:px-8 flex items-center gap-4">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 rounded-xl border border-surface-border dark:border-surface-dark-border text-brand-900 dark:text-white hover:bg-brand-500/10 transition"
+              aria-label="Abrir menu"
+            >
+              <Menu size={18} />
+            </button>
 
-        <div className="p-4 border-t border-dark-50 space-y-1">
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] tracking-[0.22em] uppercase text-steel-500 dark:text-steel-400">
+                {title.eyebrow}
+              </div>
+              <h1 className="font-serif text-xl md:text-2xl text-brand-900 dark:text-white leading-tight truncate">
+                {title.label}
+              </h1>
+            </div>
 
-          <div className="flex items-center gap-2 mb-1 px-3 pt-2">
-            <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-sm font-bold">
-              {user.name?.[0]?.toUpperCase()}
+            <div className="hidden md:flex items-center gap-2 px-4 h-11 rounded-full bg-white dark:bg-surface-dark-elevated border border-surface-border dark:border-surface-dark-border w-72 focus-within:ring-4 focus-within:ring-brand-500/15 transition">
+              <Search size={14} className="text-steel-500" />
+              <input
+                type="text"
+                placeholder="Buscar…"
+                className="bg-transparent outline-none text-sm flex-1 placeholder:text-steel-500 text-brand-900 dark:text-white"
+              />
+              <kbd className="hidden lg:inline text-[10px] text-steel-500 border border-surface-border dark:border-surface-dark-border rounded px-1.5 py-0.5">
+                /
+              </kbd>
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-white truncate">{user.name}</div>
-              <div className="text-xs text-ink-400 truncate">{user.email}</div>
-            </div>
+
+            <button className="relative w-10 h-10 rounded-full border border-surface-border dark:border-surface-dark-border bg-white/70 dark:bg-surface-dark-elevated/70 flex items-center justify-center text-brand-900 dark:text-white hover:bg-brand-500/10 transition">
+              <Bell size={16} />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-500" />
+            </button>
+
+            <ThemeToggle />
           </div>
-          <button onClick={async () => { await logout(); window.location.href = "/"; }}
-            className="flex items-center gap-2 text-sm text-ink-400 hover:text-red-400 px-3 py-2 rounded-lg hover:bg-red-900/20 w-full transition">
-            <LogOut size={16} /> Sair do admin
-          </button>
-        </div>
-      </aside>
+        </header>
 
-      {/* Content */}
-      <div className="flex-1 ml-64">
-        <main className="p-8 min-h-screen bg-dark-300">{children}</main>
+        <motion.main
+          key={pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          className="px-5 md:px-8 py-8 md:py-10"
+        >
+          {children}
+        </motion.main>
       </div>
     </div>
   );

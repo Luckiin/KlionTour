@@ -189,7 +189,7 @@ export default function SimulationHeroForm() {
   ];
 
   return (
-    <div className="bg-dark-200/90 backdrop-blur-md border border-brand-500/20 p-6 rounded-2xl shadow-2xl shadow-dark-400 w-full max-w-7xl mx-auto">
+    <div className="glass p-6 md:p-8 rounded-3xl shadow-soft-lg w-full max-w-7xl mx-auto">
       {/* Radio Tabs */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {tabs.map(t => (
@@ -197,9 +197,9 @@ export default function SimulationHeroForm() {
             key={t.id}
             type="button"
             onClick={() => setTipo(t.id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition ${tipo === t.id
-              ? "bg-brand-500 text-dark-400"
-              : "bg-dark-100/50 text-ink-300 hover:text-ink-100 hover:bg-dark-100"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${tipo === t.id
+              ? "bg-brand-500 text-white shadow-soft"
+              : "bg-brand-500/5 text-brand-900 dark:text-white/80 hover:bg-brand-500/15"
               }`}
           >
             {t.label}
@@ -231,7 +231,7 @@ export default function SimulationHeroForm() {
           </div>
 
           <div className="w-full md:w-36 text-left">
-            <label className="block text-sm font-medium text-ink-200 mb-1">Ida</label>
+            <label className="block text-sm font-medium text-brand-900 dark:text-white mb-1">Ida</label>
             <input type="date" value={form.date} onChange={e => update("date", e.target.value)}
               min={new Date().toISOString().split("T")[0]}
               className="input-field w-full px-2" required />
@@ -239,7 +239,7 @@ export default function SimulationHeroForm() {
 
           {tipo === "ida_volta" && (
             <div className="w-full md:w-36 text-left shrink-0">
-              <label className="block text-sm font-medium text-ink-200 mb-1">Volta</label>
+              <label className="block text-sm font-medium text-brand-900 dark:text-white mb-1">Volta</label>
               <input type="date" value={form.returnDate} onChange={e => update("returnDate", e.target.value)}
                 min={form.date || new Date().toISOString().split("T")[0]}
                 className="input-field w-full px-2" required={tipo === "ida_volta"} />
@@ -247,9 +247,9 @@ export default function SimulationHeroForm() {
           )}
 
           <div className="w-full md:w-32 relative text-left">
-            <label className="block text-sm font-medium text-ink-200 mb-1">Qtd Passageiros</label>
+            <label className="block text-sm font-medium text-brand-900 dark:text-white mb-1">Qtd Passageiros</label>
             <div className="relative">
-              <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+              <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-steel-500" />
               <input type="number" min="1" max="15" value={form.passengers}
                 onChange={e => update("passengers", e.target.value)}
                 className="input-field w-full pl-9 pr-2" placeholder="Qtd." required />

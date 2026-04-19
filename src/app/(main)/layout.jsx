@@ -5,9 +5,10 @@ import Footer from "@/components/Footer";
 // antes de chegar aqui — não precisamos de lógica de auth no layout.
 export default function MainLayout({ children }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-surface dark:bg-surface-dark text-brand-900 dark:text-white">
       <Header />
-      <main className="flex-1">{children}</main>
+      {/* pt-20 compensa o header fixed */}
+      <main className="flex-1 pt-20">{children}</main>
       <Footer />
     </div>
   );
