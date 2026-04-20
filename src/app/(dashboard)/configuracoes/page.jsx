@@ -93,7 +93,7 @@ export default function ConfiguracoesPage() {
             estado: data.uf
           }));
         }
-      } catch (err) { console.error("Erro ao buscar CEP", err); }
+      } catch (err) { }
     }
   };
 

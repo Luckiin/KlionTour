@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, CheckCircle, X, MessageSquare, Search, Filter, Loader2 } from "lucide-react";
 import { getAllQuotes, updateQuote as updateQuoteService } from "@/lib/services/quotes";
 import { QUOTE_STATUSES } from "@/lib/constants";
+import Reveal from "@/components/motion/Reveal";
+const MONEY = (v) => "R$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 export default function AdminCotacoesPage() {
   const [quotes,    setQuotes]    = useState([]);
@@ -20,7 +23,6 @@ export default function AdminCotacoesPage() {
       const data = await getAllQuotes();
       setQuotes(data);
     } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -68,130 +70,168 @@ export default function AdminCotacoesPage() {
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink-100">Gerenciar Cotações</h1>
-        <p className="text-ink-300 text-sm mt-1">Analise, aprove ou recuse solicitações dos clientes</p>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
+        <div>
+          <Reveal direction="down">
+            <h1 className="text-3xl font-serif font-medium text-brand-900 dark:text-white">Gerenciar Cotações</h1>
+            <p className="text-steel-500 dark:text-steel-400 text-sm mt-1">Gestão de propostas, orçamentos e reservas via malha digital</p>
+          </Reveal>
+        </div>
       </div>
 
-      {/* Filtros */}
-      <div className="card p-4 mb-6 flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+      {/* Filtros e Busca */}
+      <div className="card p-6 flex flex-col lg:flex-row gap-6 items-center">
+        <div className="relative flex-1 w-full group">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-steel-400 group-focus-within:text-brand-500 transition-colors" />
           <input value={search} onChange={e => setSearch(e.target.value)}
-            className="input-field input-icon text-sm" placeholder="Buscar por cliente, rota..." />
+            className="input-field input-icon" placeholder="Buscar por cliente, aeronave ou destino..." />
         </div>
-        <div className="flex gap-1 flex-wrap">
-          {Object.entries({ all:"Todas", pending:"Pendentes", approved:"Aprovadas", paid:"Pagas", done:"Concluídas", rejected:"Recusadas" }).map(([val, label]) => (
+        <div className="flex gap-2 flex-wrap justify-center">
+          {Object.entries({ 
+            all:"Todas", 
+            pending:"Pendentes", 
+            proposed: "Propostas",
+            approved:"Aprovadas", 
+            paid:"Pagas", 
+            done:"Concluídas", 
+            rejected:"Recusadas" 
+          }).map(([val, label]) => (
             <button key={val} onClick={() => setFilter(val)}
-              className={`text-xs px-3 py-2 rounded-lg font-medium transition ${filter === val ? "bg-brand-500 text-white" : "bg-dark-100 text-ink-300 hover:bg-dark-50"}`}>
-              {label} ({counts[val]})
+              className={`text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl font-bold transition-all ${filter === val ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30" : "bg-surface-subtle dark:bg-surface-dark-subtle text-steel-500 dark:text-steel-400 hover:bg-brand-500/10"}`}>
+              {label} <span className="opacity-50 ml-1">({counts[val] || 0})</span>
             </button>
           ))}
         </div>
       </div>
 
       {loading ? (
-        <div className="card p-16 flex items-center justify-center">
-          <Loader2 size={32} className="animate-spin text-brand-500" />
+        <div className="card p-24 flex flex-col items-center justify-center border-dashed">
+          <Loader2 size={32} className="animate-spin text-brand-500 mb-4" />
+          <p className="text-sm font-bold text-steel-500 uppercase tracking-widest">Carregando Cotações...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Lista */}
-          <div className="lg:col-span-2 space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Lista de Cotações */}
+          <div className="lg:col-span-2 space-y-4">
             {filtered.length === 0 ? (
-              <div className="card p-10 text-center text-ink-400">Nenhuma cotação encontrada</div>
-            ) : filtered.map(q => {
+              <div className="card p-24 text-center border-dashed opacity-60">
+                <Filter size={48} className="text-steel-300 dark:text-steel-600 mx-auto mb-4" />
+                <p className="text-sm font-bold text-steel-500 uppercase tracking-widest">Nenhuma cotação nesta categoria</p>
+              </div>
+            ) : filtered.map((q, i) => {
               const s = QUOTE_STATUSES[q.status] || QUOTE_STATUSES.pending;
+              const isSelected = selected?.id === q.id;
               return (
-                <button key={q.id}
-                  onClick={() => { setSelected(q); setAdminNote(q.admin_notes || ""); setNewPrice(q.total_price || ""); }}
-                  className={`w-full card p-4 text-left hover:shadow-md transition ${selected?.id === q.id ? "ring-2 ring-brand-500" : ""}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-ink-100 truncate">{q.user_name}</span>
-                        <span className={`badge ${s.color} text-xs flex-shrink-0`}>{s.label}</span>
+                <Reveal key={q.id} direction="up" delay={i * 0.02}>
+                  <button
+                    onClick={() => { setSelected(q); setAdminNote(q.admin_notes || ""); setNewPrice(q.total_price || ""); }}
+                    className={`w-full card overflow-hidden group transition-all duration-300 ${isSelected ? "ring-2 ring-brand-500 shadow-soft-lg" : "hover:shadow-md"}`}>
+                    <div className={`p-5 flex items-start justify-between gap-4 ${isSelected ? "bg-brand-500/5" : ""}`}>
+                      <div className="min-w-0 text-left">
+                        <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                          <span className="font-bold text-brand-900 dark:text-white truncate">{q.user_name}</span>
+                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${s.color}`}>
+                            {s.label}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-bold text-steel-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                          {q.from_city} <ChevronRight size={10} /> {q.to_city}
+                        </p>
+                        <p className="text-[10px] font-medium text-steel-500 dark:text-steel-400">
+                          {new Date(q.date + "T12:00:00").toLocaleDateString("pt-BR")} · {q.passengers} pax
+                        </p>
                       </div>
-                      <p className="text-xs text-ink-300 mt-0.5">{q.from_city} → {q.to_city}</p>
-                      <p className="text-xs text-ink-400 mt-0.5">
-                        {new Date(q.date + "T12:00:00").toLocaleDateString("pt-BR")} · {q.passengers} pax
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-sm font-bold text-brand-400">
-                        {q.total_price ? `R$ ${Number(q.total_price).toLocaleString("pt-BR")}` : "—"}
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-serif text-lg font-medium text-brand-600 dark:text-brand-300 mb-1">
+                          {q.total_price ? `R$ ${Number(q.total_price).toLocaleString("pt-BR")}` : "—"}
+                        </div>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isSelected ? "bg-brand-500 text-white" : "bg-steel-100 dark:bg-steel-800 text-steel-400 group-hover:bg-brand-500 group-hover:text-white shadow-sm"}`}>
+                          <ChevronRight size={14} />
+                        </div>
                       </div>
-                      <ChevronRight size={14} className="text-ink-400 ml-auto mt-1" />
                     </div>
-                  </div>
-                </button>
+                  </button>
+                </Reveal>
               );
             })}
           </div>
 
-          {/* Detalhe */}
+          {/* Detalhe da Cotação */}
           <div className="lg:col-span-3">
             {!selected ? (
-              <div className="card p-16 text-center text-ink-400 h-full flex flex-col items-center justify-center">
-                <Filter size={40} className="mb-3 text-ink-500" />
-                <p>Selecione uma cotação para ver os detalhes</p>
+              <div className="card p-24 text-center border-dashed flex flex-col items-center justify-center h-full sticky top-8">
+                <div className="w-20 h-20 rounded-full bg-surface-subtle dark:bg-surface-dark-subtle flex items-center justify-center text-steel-300 dark:text-steel-600 mb-6 border border-surface-border dark:border-surface-dark-border">
+                  <Filter size={32} />
+                </div>
+                <h3 className="font-serif text-2xl text-brand-900 dark:text-white mb-2">Detalhes da Cotação</h3>
+                <p className="text-steel-500 max-w-xs">Selecione uma solicitação ao lado para gerenciar valores e status.</p>
               </div>
             ) : (
-              <div className="card p-6 space-y-5 sticky top-8">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="font-bold text-ink-100 text-lg">{selected.user_name}</h2>
-                    <p className="text-sm text-ink-300">{selected.user_email} · {selected.user_phone}</p>
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+                className="card overflow-hidden sticky top-8 shadow-soft-xl border-brand-500/10">
+                <div className="p-8 border-b border-surface-border dark:border-surface-dark-border bg-surface-subtle/30 dark:bg-surface-dark-subtle/20">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h2 className="text-2xl font-serif font-medium text-brand-900 dark:text-white truncate">{selected.user_name}</h2>
+                      <p className="text-xs font-medium text-steel-500 dark:text-steel-400 mt-1 uppercase tracking-widest">{selected.user_email} · {selected.user_phone}</p>
+                    </div>
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border shadow-sm ${QUOTE_STATUSES[selected.status]?.color}`}>
+                      {QUOTE_STATUSES[selected.status]?.label}
+                    </span>
                   </div>
-                  <span className={`badge ${QUOTE_STATUSES[selected.status]?.color}`}>
-                    {QUOTE_STATUSES[selected.status]?.label}
-                  </span>
                 </div>
 
-                <div className="bg-dark-300 rounded-xl divide-y text-sm">
-                  {[
-                    ["Rota",        `${selected.from_city} → ${selected.to_city}`],
-                    ["Data ida",    new Date(selected.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long" })],
-                    selected.return_date && ["Data volta", new Date(selected.return_date + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long" })],
-                    ["Passageiros", `${selected.passengers} pessoas`],
-                    ["Van",         selected.van_name],
-                    ["Solicitado",  new Date(selected.created_at).toLocaleString("pt-BR")],
-                  ].filter(Boolean).map(([label, val]) => (
-                    <div key={label} className="flex justify-between px-4 py-2.5">
-                      <span className="text-ink-300">{label}</span>
-                      <span className="font-medium text-ink-100 text-right max-w-[55%]">{val}</span>
+                <div className="p-8 space-y-8">
+                  {/* Dados da Viagem */}
+                  <div className="bg-surface-subtle/30 dark:bg-surface-dark-subtle/20 rounded-3xl overflow-hidden border border-surface-border dark:border-surface-dark-border">
+                    <div className="divide-y divide-surface-border dark:divide-surface-dark-border">
+                      {[
+                        ["Rota Solicitada",        <div className="flex items-center gap-2 font-bold text-brand-900 dark:text-white">{selected.from_city} <ChevronRight size={12} className="text-steel-400" /> {selected.to_city}</div>],
+                        ["Data de Ida",    new Date(selected.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long", year: "numeric" })],
+                        selected.return_date && ["Data de Volta", new Date(selected.return_date + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long", year: "numeric" })],
+                        ["Passageiros", `${selected.passengers} pessoas`],
+                        ["Modelo de Aeronave/Van",         selected.van_name],
+                        ["Data de Solicitação",  new Date(selected.created_at).toLocaleString("pt-BR")],
+                      ].filter(Boolean).map(([label, val]) => (
+                        <div key={label} className="flex justify-between px-6 py-4 items-center">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-steel-500 dark:text-steel-400">{label}</span>
+                          <span className="text-sm font-medium text-brand-900 dark:text-white text-right max-w-[60%]">{val}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  {selected.notes && (
-                    <div className="px-4 py-2.5">
-                      <p className="text-ink-300 mb-1">Obs. do cliente:</p>
-                      <p className="text-ink-200 italic">"{selected.notes}"</p>
-                    </div>
-                  )}
-                </div>
+                    {selected.notes && (
+                      <div className="px-6 py-5 bg-brand-500/5 border-t border-surface-border dark:border-surface-dark-border">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 mb-2">Mensagem do Cliente:</p>
+                        <p className="text-sm italic text-brand-900/70 dark:text-white/70 leading-relaxed font-serif">"{selected.notes}"</p>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Ações admin */}
-                {(selected.status === "pending" || selected.status === "approved") && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-ink-200 mb-1">
-                        Valor final (R$){" "}
-                        {selected.total_price && (
-                          <span className="text-ink-400 font-normal">atual: R$ {Number(selected.total_price).toLocaleString("pt-BR")}</span>
-                        )}
-                      </label>
-                      <input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)}
-                        className="input-field text-sm" placeholder="Digite o valor final" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-ink-200 mb-1">Mensagem ao cliente</label>
-                      <textarea value={adminNote} onChange={e => setAdminNote(e.target.value)} rows={3}
-                        className="input-field resize-none text-sm"
-                        placeholder="Ex: Confirmado para às 7h, motorista Carlos. Pagamento via PIX..." />
-                    </div>
-                    {selected.status === "pending" || selected.status === "negotiating" ? (
-                      <div className="flex gap-3">
+                  {/* Fluxo de Negociação */}
+                  {["pending", "negotiating", "proposed"].includes(selected.status) && (
+                    <div className="space-y-6 pt-4 border-t border-surface-border dark:border-surface-dark-border">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-black uppercase tracking-widest text-brand-900 dark:text-white block ml-1">Propôr Valor (R$)</label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-steel-400 font-bold text-sm">R$</span>
+                            <input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)}
+                              className="input-field pl-12 text-lg font-serif font-medium" placeholder="0.00" />
+                          </div>
+                          {selected.total_price && (
+                            <p className="text-[10px] text-steel-500 ml-1">Valor atual: R$ {Number(selected.total_price).toLocaleString("pt-BR")}</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-black uppercase tracking-widest text-brand-900 dark:text-white block ml-1">Nota Interna / Mensagem</label>
+                          <textarea value={adminNote} onChange={e => setAdminNote(e.target.value)} rows={2}
+                            className="input-field resize-none text-sm p-4"
+                            placeholder="Instruções de pagamento ou detalhes do serviço..." />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
                         <button disabled={saving}
                           onClick={() => {
                             const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -202,43 +242,56 @@ export default function AdminCotacoesPage() {
                               total_price: newPrice ? Number(newPrice) : selected.total_price,
                             });
                           }}
-                          className="btn-primary flex-1 disabled:opacity-50">
-                          <CheckCircle size={16} /> {saving ? "Salvando..." : "Enviar Proposta"}
+                          className="btn-primary flex-1 py-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-brand-500/20">
+                          {saving ? "Processando..." : <><CheckCircle size={18} /> Enviar Proposta</>}
                         </button>
-                        <button disabled={saving}
-                          onClick={() => handleAction(selected.id, {
-                            status:      "rejected",
-                            admin_notes: `[Admin]: Recusado. ${adminNote}`,
-                          })}
-                          className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-red-700 transition flex items-center justify-center gap-2 disabled:opacity-50">
-                          <X size={16} /> Recusar
-                        </button>
+                        
+                        {(selected.status === "pending" || selected.status === "negotiating") && (
+                          <button disabled={saving}
+                            onClick={() => {
+                              if(!confirm("Atenção: Deseja realmente recusar esta cotação?")) return;
+                              handleAction(selected.id, {
+                                status:      "rejected",
+                                admin_notes: `[Admin]: Recusado. ${adminNote}`,
+                              });
+                            }}
+                            className="px-8 bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white rounded-2xl font-bold text-xs uppercase tracking-widest transition-all">
+                            <X size={18} /> Recusar
+                          </button>
+                        )}
                       </div>
-                    ) : null}
-                  </div>
-                )}
+                    </div>
+                  )}
 
-                {selected.status === "approved" && (
-                  <button onClick={() => handleAction(selected.id, { status: "paid" })}
-                    className="btn-primary w-full bg-emerald-600 hover:bg-emerald-700">
-                    <CheckCircle size={16} /> Marcar como Pago
-                  </button>
-                )}
+                  {selected.status === "approved" && (
+                    <div className="pt-4">
+                      <button onClick={() => handleAction(selected.id, { status: "paid" })}
+                        className="btn-primary w-full py-5 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 text-xs font-black uppercase tracking-[0.2em]">
+                        <CheckCircle size={20} /> Confirmar Pagamento Efetuado
+                      </button>
+                    </div>
+                  )}
 
-                {selected.status === "paid" && (
-                  <button onClick={() => handleAction(selected.id, { status: "done" })}
-                    className="btn-primary w-full">
-                    <CheckCircle size={16} /> Marcar como Concluída
-                  </button>
-                )}
+                  {selected.status === "paid" && (
+                    <div className="pt-4">
+                      <button onClick={() => handleAction(selected.id, { status: "done" })}
+                        className="btn-primary w-full py-5 text-xs font-black uppercase tracking-[0.2em]">
+                        <CheckCircle size={20} /> Concluir e Arquivar Viagem
+                      </button>
+                    </div>
+                  )}
 
-                {selected.admin_notes && (
-                  <div className="bg-brand-900/30 rounded-xl p-3 text-sm text-brand-400 flex items-start gap-2">
-                    <MessageSquare size={14} className="mt-0.5 flex-shrink-0" />
-                    <span><strong>Nota registrada:</strong> {selected.admin_notes}</span>
-                  </div>
-                )}
-              </div>
+                  {selected.admin_notes && (
+                    <div className="bg-surface-subtle dark:bg-surface-dark-subtle/50 rounded-2xl p-6 border border-surface-border dark:border-surface-dark-border">
+                      <div className="flex items-center gap-3 mb-3">
+                        <MessageSquare size={16} className="text-brand-500" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-900 dark:text-white">Relatório de Atividades Admin</span>
+                      </div>
+                      <p className="text-xs text-brand-900/60 dark:text-white/60 leading-relaxed whitespace-pre-wrap">{selected.admin_notes}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             )}
           </div>
         </div>

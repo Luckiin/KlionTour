@@ -104,7 +104,6 @@ export default function CotacaoDashboardPage() {
 
       setSubmitted(true);
     } catch (err) {
-      console.error(err);
       alert("Erro ao enviar. Tente novamente.");
     } finally {
       setLoading(false);

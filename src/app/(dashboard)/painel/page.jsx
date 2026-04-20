@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar
+  ResponsiveContainer
 } from "recharts";
 import { useAuth } from "@/context/AuthContext";
 import { getMyQuotes } from "@/lib/services/quotes";
@@ -32,11 +32,10 @@ export default function PainelPage() {
     if (!user?.id) return;
     getMyQuotes(user.id)
       .then(setQuotes)
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [user?.id]);
 
-  // --- Processamento de Dados p/ Gráfico ---
   const chartData = useMemo(() => {
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const now = new Date();
@@ -56,7 +55,7 @@ export default function PainelPage() {
 
   const stats = {
     total:    quotes.length,
-    pending:  quotes.filter(q => q.status === "pending" || q.status === "negotiating" || q.status === "proposed").length,
+    pending:  quotes.filter(q => ["pending", "negotiating", "proposed"].includes(q.status)).length,
     approved: quotes.filter(q => ["approved", "paid", "done"].includes(q.status)).length,
     spent:    quotes
       .filter(q => ["paid", "done", "approved"].includes(q.status))
@@ -80,7 +79,6 @@ export default function PainelPage() {
   return (
     <div className="space-y-10 max-w-[1600px] mx-auto pb-10">
       
-      {/* 1. HEADER HERO (Apenas saudações) */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
            <Reveal direction="down">
@@ -95,7 +93,6 @@ export default function PainelPage() {
         </div>
       </section>
 
-      {/* 2. KPI GRID (Refinado) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard label="Solicitações" value={stats.total} icon={FileText} color="brand" delay={0} />
         <KPICard label="Em Negociação" value={stats.pending} icon={Clock} color="amber" delay={0.1} />
@@ -104,8 +101,6 @@ export default function PainelPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        
-        {/* 3. COLUNA DE ATIVIDADE (8/12) */}
         <section className="lg:col-span-8">
           <div className="card glass p-0 overflow-hidden flex flex-col h-full">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 md:p-8 border-b border-surface-border dark:border-surface-dark-border">
@@ -160,10 +155,7 @@ export default function PainelPage() {
           </div>
         </section>
 
-        {/* 4. COLUNA SIDEBAR (4/12) */}
         <aside className="lg:col-span-4 flex flex-col h-full">
-           
-           {/* CARD DE GRÁFICO (RECHARTS) */}
            <Reveal direction="left" delay={0.1} className="h-full">
               <div className="card glass p-8 space-y-8 overflow-hidden relative flex flex-col h-full">
                  <div className="flex items-center justify-between">
@@ -216,8 +208,6 @@ export default function PainelPage() {
                  </div>
               </div>
            </Reveal>
-
-
         </aside>
       </div>
     </div>
@@ -261,10 +251,10 @@ function QuoteRow({ quote, index }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, scale: 0.98 }}
       transition={{ duration: 0.35, delay: index * 0.03 }}
-      className="card glass border-transparent hover:border-brand-500/20 group cursor-pointer relative overflow-hidden"
+      className="card bg-white/5 dark:bg-surface-dark-elevated/40 border-surface-border dark:border-surface-dark-border hover:border-brand-500/30 group cursor-pointer relative overflow-hidden transition-all duration-300"
     >
       <div className="p-6 md:p-8 flex flex-col xl:flex-row xl:items-center gap-8 lg:gap-12">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1">
           <div className="flex items-center gap-3 mb-6">
             <span className={`text-[9px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${status.color.replace('badge', 'bg-opacity-10')}`}>
               {status.label}
@@ -274,25 +264,29 @@ function QuoteRow({ quote, index }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 md:gap-12 w-full overflow-hidden">
-             <div className="min-w-0 shrink-0">
-                <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest mb-1.5 leading-none">Origem</p>
-                <h4 className="font-serif text-xl md:text-2xl text-brand-900 dark:text-white truncate">{quote.from_city}</h4>
+          <div className="flex items-center gap-4 md:gap-10 w-full">
+             <div className="flex-1">
+                <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest mb-2 leading-none">Origem</p>
+                <h4 className="font-serif text-lg md:text-xl text-brand-900 dark:text-white leading-tight">
+                  {quote.from_city}
+                </h4>
              </div>
              
-             <div className="flex flex-col items-center gap-1 shrink-0 px-2 opacity-30">
-                <div className="h-px w-8 md:w-16 bg-brand-500" />
-                <ChevronRight size={14} className="text-brand-500 -mt-2 ml-auto" />
+             <div className="flex flex-col items-center gap-1 shrink-0 opacity-40 px-2">
+                <div className="h-[2px] w-6 md:w-12 bg-brand-500" />
+                <ChevronRight size={16} className="text-brand-500 -mt-2.5 ml-auto" />
              </div>
 
-             <div className="min-w-0 shrink-0">
-                <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest mb-1.5 leading-none">Destino</p>
-                <h4 className="font-serif text-xl md:text-2xl text-brand-500 truncate">{quote.to_city}</h4>
+             <div className="flex-1">
+                <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest mb-2 leading-none">Destino</p>
+                <h4 className="font-serif text-lg md:text-xl text-brand-500 leading-tight">
+                  {quote.to_city}
+                </h4>
              </div>
           </div>
         </div>
 
-        <div className="flex items-end justify-between xl:flex-col xl:items-end gap-6 xl:pl-12 xl:border-l border-surface-border dark:border-surface-dark-border min-w-[140px]">
+        <div className="flex items-end justify-between xl:flex-col xl:items-end gap-6 xl:pl-10 xl:border-l border-surface-border dark:border-surface-dark-border min-w-[200px]">
            <div className="xl:text-right">
               <p className="text-[10px] font-bold text-steel-400 uppercase tracking-widest mb-1 leading-none">Investimento</p>
               <div className="font-serif text-3xl md:text-4xl text-brand-900 dark:text-white tracking-tighter">
@@ -300,12 +294,12 @@ function QuoteRow({ quote, index }) {
               </div>
            </div>
            
-           <div className="flex items-center gap-4 text-[10px] font-bold text-steel-500 uppercase tracking-widest">
-              <span className="flex items-center gap-2 bg-surface-subtle dark:bg-surface-dark-subtle px-3 py-1.5 rounded-xl border border-surface-border dark:border-surface-dark-border">
+           <div className="flex items-center gap-3 text-[10px] font-bold text-steel-500 uppercase tracking-widest">
+              <span className="flex items-center gap-2 bg-white dark:bg-surface-dark px-3 py-2 rounded-xl shadow-sm border border-surface-border dark:border-surface-dark-border">
                 <Calendar size={12} className="text-brand-500" /> 
                 {new Date(quote.date + "T12:00:00").toLocaleDateString("pt-BR", { day: 'numeric', month: 'short' })}
               </span>
-              <span className="flex items-center gap-2 bg-surface-subtle dark:bg-surface-dark-subtle px-3 py-1.5 rounded-xl border border-surface-border dark:border-surface-dark-border">
+              <span className="flex items-center gap-2 bg-white dark:bg-surface-dark px-3 py-2 rounded-xl shadow-sm border border-surface-border dark:border-surface-dark-border">
                 <Users size={12} className="text-brand-500" /> 
                 {quote.passengers} pax
               </span>

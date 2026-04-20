@@ -55,7 +55,6 @@ export default function RegisterPage() {
           setSuggestions(data);
           setShowSuggestions(true);
         } catch (err) {
-          console.error("Erro na busca", err);
         }
       }
     }, 800);

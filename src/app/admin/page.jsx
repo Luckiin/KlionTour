@@ -24,8 +24,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     Promise.all([getAllQuotes(), getRevenues(), getExpenses()])
-      .then(([q, r, e]) => { setQuotes(q); setRevenues(r); setExpenses(e); })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

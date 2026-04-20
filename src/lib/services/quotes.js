@@ -41,14 +41,61 @@ export async function createQuote(payload) {
 // ─── Atualiza status / dados de uma cotação (admin) ───────
 export async function updateQuote(id, updates) {
   const supabase = createClient();
-  const { data, error } = await supabase
+  
+  // 1. Atualiza a cotação
+  const { data: quote, error } = await supabase
     .from("quotes")
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select()
     .single();
+
   if (error) throw new Error(error.message);
-  return data;
+
+  // 2. Automação Financeira: Se aprovado, criar "A Receber"
+  if (updates.status === "approved" || updates.status === "paid") {
+    try {
+      // Verificar se já existe lançamento para esta cotação
+      const { data: existing } = await supabase
+        .from("lancamentos")
+        .select("id")
+        .eq("quote_id", id)
+        .maybeSingle();
+
+      if (!existing) {
+        // Pegar a primeira conta disponível
+        const { data: contas } = await supabase.from("contas").select("id").limit(1);
+        const contaId = contas?.[0]?.id || null;
+
+        // Criar o lançamento
+        await supabase.from("lancamentos").insert({
+          descricao: `Recebimento Cotação: ${quote.from_city} -> ${quote.to_city}`,
+          valor: quote.total_price || 0,
+          tipo: "receita",
+          status: updates.status === "paid" ? "pago" : "pendente",
+          data_vencimento: quote.date || new Date().toISOString().slice(0, 10),
+          data_pagamento: updates.status === "paid" ? new Date().toISOString().slice(0, 10) : null,
+          valor_pago: updates.status === "paid" ? (quote.total_price || 0) : null,
+          quote_id: id,
+          cliente_id: quote.user_id || null,
+          conta_id: contaId
+        });
+      } else if (updates.status === "paid") {
+        // Se já existe e foi pago agora, atualiza o lançamento
+        await supabase.from("lancamentos")
+          .update({ 
+            status: "pago", 
+            data_pagamento: new Date().toISOString().slice(0, 10),
+            valor_pago: quote.total_price || 0
+          })
+          .eq("quote_id", id);
+      }
+    } catch (finErr) {
+      // Não bloqueia a atualização da cotação se o financeiro falhar
+    }
+  }
+
+  return quote;
 }
 
 // ─── Deleta cotação (admin) ───────────────────────────────

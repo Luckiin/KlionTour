@@ -1,13 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FileText, DollarSign, Users,
-  UserCheck, Bus, LogOut, ChevronLeft, X,
+  UserCheck, Bus, LogOut, ChevronLeft, X, Settings,
+  ArrowDownCircle, ArrowUpCircle, CalendarRange, TrendingUp, ChevronDown
 } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
+
+const NAV_FINANCEIRO = [
+  { href: "/admin/financeiro",                icon: LayoutDashboard, label: "Dashboard"        },
+  { href: "/admin/financeiro/contas-pagar",   icon: ArrowDownCircle, label: "Contas a Pagar"   },
+  { href: "/admin/financeiro/contas-receber", icon: ArrowUpCircle,   label: "Contas a Receber" },
+  { href: "/admin/financeiro/agenda",         icon: CalendarRange,   label: "Agenda"           },
+  { href: "/admin/financeiro/extrato",        icon: FileText,        label: "Extrato"          },
+  { href: "/admin/financeiro/fluxo-caixa",    icon: TrendingUp,      label: "Fluxo de Caixa"   },
+];
 
 const NAV = [
   { href: "/admin",             icon: LayoutDashboard, label: "Visão geral" },
@@ -16,6 +27,7 @@ const NAV = [
   { href: "/admin/clientes",    icon: Users,            label: "Clientes"    },
   { href: "/admin/motoristas",  icon: UserCheck,        label: "Motoristas"  },
   { href: "/admin/veiculos",    icon: Bus,              label: "Veículos"    },
+  { href: "/admin/configuracoes", icon: Settings,       label: "Configurações" },
 ];
 
 export default function AdminSidebar({
@@ -96,6 +108,9 @@ export default function AdminSidebar({
         {/* Navegação */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {NAV.map(({ href, icon: Icon, label }) => {
+            // Se for o Financeiro, vamos tratá-lo separadamente para ser colapsável
+            if (href === "/admin/financeiro") return null;
+
             const active = pathname === href || (href !== "/admin" && pathname?.startsWith(href));
             return (
               <Link
@@ -109,7 +124,6 @@ export default function AdminSidebar({
                 }`}
                 title={collapsed ? label : undefined}
               >
-                {/* Barra indicadora */}
                 {active && (
                   <motion.span
                     layoutId="admin-active-pill"
@@ -135,6 +149,11 @@ export default function AdminSidebar({
               </Link>
             );
           })}
+
+          <div className="h-px bg-surface-border dark:bg-surface-dark-border my-2" />
+
+          {/* Menu Financeiro Colapsável - Estilo PrevGestão */}
+          <FinanceiroMenu collapsed={collapsed} pathname={pathname} setMobileOpen={setMobileOpen} />
         </nav>
 
         {/* Rodapé: usuário + toggle collapse */}
@@ -189,4 +208,65 @@ export default function AdminSidebar({
       </motion.aside>
     </>
   );
+}
+
+function FinanceiroMenu({ collapsed, pathname, setMobileOpen }) {
+  const [open, setOpen] = useState(pathname.startsWith("/admin/financeiro"));
+  
+  return (
+    <div className="space-y-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "w-full flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors",
+          pathname.startsWith("/admin/financeiro") 
+            ? "bg-brand-500 text-white shadow-soft" 
+            : "text-brand-900 dark:text-white/80 hover:bg-brand-500/10 dark:hover:bg-brand-300/10"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <DollarSign size={18} className="shrink-0" />
+          {!collapsed && <span>Financeiro</span>}
+        </div>
+        {!collapsed && (
+          <ChevronDown size={14} className={cn("transition-transform duration-300", open && "rotate-180")} />
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && !collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden pl-4 space-y-1"
+          >
+            {NAV_FINANCEIRO.map(({ href, icon: Icon, label }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium transition-colors",
+                    active 
+                      ? "bg-brand-500/10 text-brand-500 dark:text-brand-300 font-bold" 
+                      : "text-steel-500 dark:text-steel-400 hover:bg-brand-500/10"
+                  )}
+                >
+                  <Icon size={14} className="shrink-0" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
 }

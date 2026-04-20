@@ -29,7 +29,6 @@ export default function MinhasCotacoesPage() {
       const data = await getMyQuotes(user.id);
       setQuotes(data);
     } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }

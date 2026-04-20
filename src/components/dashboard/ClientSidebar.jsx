@@ -17,11 +17,6 @@ const NAV = [
   { href: "/configuracoes",   icon: Settings,        label: "Configurações",   id: "configuracoes" },
 ];
 
-const SECONDARY_NAV = [
-  { href: "#", icon: MessageSquare, label: "Suporte", id: "suporte" },
-  { href: "#", icon: HelpCircle,    label: "Ajuda",   id: "ajuda" },
-];
-
 export default function ClientSidebar({
   collapsed,
   setCollapsed,
@@ -117,22 +112,6 @@ export default function ClientSidebar({
                  />
                );
              })}
-          </div>
-
-          <div className="space-y-1">
-             {!collapsed && (
-               <p className="px-3 mb-2 text-[10px] font-bold text-steel-400 uppercase tracking-[0.2em]">Extras</p>
-             )}
-             {SECONDARY_NAV.map(({ href, icon: Icon, label, id }) => (
-               <SidebarItem 
-                 key={id}
-                 href={href}
-                 icon={Icon}
-                 label={label}
-                 active={false}
-                 collapsed={collapsed}
-               />
-             ))}
           </div>
         </div>
 

@@ -15,6 +15,7 @@ const TITLES = {
   "/admin/clientes":    { label: "Clientes",     eyebrow: "Pessoas"   },
   "/admin/motoristas":  { label: "Motoristas",   eyebrow: "Equipe"    },
   "/admin/veiculos":    { label: "Veículos",     eyebrow: "Frota"     },
+  "/admin/configuracoes": { label: "Configurações", eyebrow: "Sistema" },
 };
 
 export default function AdminLayout({ children }) {

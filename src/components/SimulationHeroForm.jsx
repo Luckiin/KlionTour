@@ -41,7 +41,6 @@ export default function SimulationHeroForm() {
     }
     
     const distFormatada = distancia.toFixed(2);
-    console.log('distancia dessa viagem', distFormatada + ' km');
 
     // Mates de preço
     let basePrice = 0;

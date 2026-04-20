@@ -27,7 +27,6 @@ export default function CityInput({ label, value, onChange, onCoordinateSelect, 
           const data = await res.json();
           setSuggestions(data);
         } catch (err) {
-          console.error("Erro na busca de localização", err);
         } finally {
           setLoading(false);
         }

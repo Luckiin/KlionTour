@@ -1,299 +1,400 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { TrendingUp, DollarSign, Plus, Trash2, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  getRevenues, createRevenue, deleteRevenue,
-  getExpenses, createExpense, deleteExpense,
-} from "@/lib/services/financial";
-import { EXPENSE_CATEGORIES, REVENUE_CATEGORIES } from "@/lib/constants";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Legend,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  PieChart, Pie, Cell, Label as RechartsLabel
 } from "recharts";
+import {
+  DollarSign, TrendingDown, TrendingUp, AlertTriangle, RefreshCw,
+  Plus, X, CheckCircle, ChevronDown, Repeat, SplitSquareHorizontal, Info,
+  ArrowDownCircle, ArrowUpCircle, List, BarChart2, FileText, Trash2, Pencil
+} from "lucide-react";
+import { toast } from "sonner";
+import { useFinanceiroDashboard, useLancamentos, useCategorias } from "@/lib/hooks/useFinanceiro";
+import AnexoFinanceiro from "@/components/admin/financeiro/AnexoFinanceiro";
+import ModalLancamento from "@/components/admin/financeiro/ModalLancamento";
+import { maskMoeda, fmtBRL } from "@/lib/utils";
 
-const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const MONEY  = (v) => `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+const MESES      = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const fmt        = (v) => fmtBRL(v);
+const fmtShort   = (v) => v >= 1000 ? `R$${(v/1000).toFixed(0)}k` : `R$${(v||0).toFixed(0)}`;
 
-function getMonthlyData(revenues, expenses) {
-  const data = MONTHS.map(m => ({ month: m, receitas: 0, despesas: 0 }));
-  revenues.forEach(r => { data[new Date(r.date).getUTCMonth()].receitas += Number(r.amount); });
-  expenses.forEach(e => { data[new Date(e.date).getUTCMonth()].despesas += Number(e.amount); });
-  return data.filter(d => d.receitas > 0 || d.despesas > 0);
-}
+// Cores adaptadas para KlionTour: Vinho (#470002) e tons associados
+const CORES        = ["#470002","#10b981","#8b5cf6","#f97316","#06b6d4","#ec4899","#84cc16","#f59e0b","#14b8a6","#ef4444"];
 
-function getExpensePie(expenses) {
-  const map = {};
-  expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + Number(e.amount); });
-  return Object.entries(map).map(([key, value]) => ({
-    name:  EXPENSE_CATEGORIES[key]?.label ?? key,
-    value,
-    color: EXPENSE_CATEGORIES[key]?.color ?? "#6b7280",
-  }));
-}
+function cn(...c) { return c.filter(Boolean).join(" "); }
 
-export default function FinanceiroPage() {
-  const [revenues,    setRevenues]    = useState([]);
-  const [expenses,    setExpenses]    = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [tab,         setTab]         = useState("overview");
-  const [showAddRev,  setShowAddRev]  = useState(false);
-  const [showAddExp,  setShowAddExp]  = useState(false);
-  const [savingRev,   setSavingRev]   = useState(false);
-  const [savingExp,   setSavingExp]   = useState(false);
-  const [newRev, setNewRev] = useState({ description: "", amount: "", date: "", category: "viagem" });
-  const [newExp, setNewExp] = useState({ description: "", amount: "", date: "", category: "combustivel" });
-
-  useEffect(() => {
-    Promise.all([getRevenues(), getExpenses()])
-      .then(([r, e]) => { setRevenues(r); setExpenses(e); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  const totalRev  = revenues.reduce((a, r) => a + Number(r.amount), 0);
-  const totalExp  = expenses.reduce((a, e) => a + Number(e.amount), 0);
-  const netProfit = totalRev - totalExp;
-  const margin    = totalRev > 0 ? ((netProfit / totalRev) * 100).toFixed(1) : 0;
-
-  const addRevenue = async () => {
-    if (!newRev.description || !newRev.amount || !newRev.date) return;
-    setSavingRev(true);
-    try {
-      const entry = await createRevenue({ ...newRev, amount: parseFloat(newRev.amount) });
-      setRevenues(prev => [entry, ...prev]);
-      setNewRev({ description: "", amount: "", date: "", category: "viagem" });
-      setShowAddRev(false);
-    } catch (err) { alert(err.message); }
-    finally { setSavingRev(false); }
-  };
-
-  const addExpense = async () => {
-    if (!newExp.description || !newExp.amount || !newExp.date) return;
-    setSavingExp(true);
-    try {
-      const entry = await createExpense({ ...newExp, amount: parseFloat(newExp.amount) });
-      setExpenses(prev => [entry, ...prev]);
-      setNewExp({ description: "", amount: "", date: "", category: "combustivel" });
-      setShowAddExp(false);
-    } catch (err) { alert(err.message); }
-    finally { setSavingExp(false); }
-  };
-
-  const removeRev = async (id) => {
-    try { await deleteRevenue(id); setRevenues(prev => prev.filter(r => r.id !== id)); }
-    catch (err) { alert(err.message); }
-  };
-  const removeExp = async (id) => {
-    try { await deleteExpense(id); setExpenses(prev => prev.filter(e => e.id !== id)); }
-    catch (err) { alert(err.message); }
-  };
-
-  const monthlyData = getMonthlyData(revenues, expenses);
-  const expPie      = getExpensePie(expenses);
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 size={36} className="animate-spin text-brand-500" />
+// ── Tooltip personalizado ────────────────────────────────────────────────────
+function CustomTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-surface-dark border border-surface-border dark:border-surface-dark-border rounded-xl p-3 shadow-xl">
+      <p className="text-brand-900 dark:text-white font-bold mb-1 text-xs">{payload[0].name}</p>
+      <p className="text-brand-500 font-black text-xs">{fmt(payload[0].value)}</p>
     </div>
   );
+}
+
+// ── Label central do donut ───────────────────────────────────────────────────
+function CenterLabel({ viewBox, total, linha1 }) {
+  const { cx, cy } = viewBox;
+  return (
+    <g>
+      <text x={cx} y={cy - 10} textAnchor="middle" className="fill-steel-500" fontSize="10" fontWeight="700">
+        {linha1.toUpperCase()}
+      </text>
+      <text x={cx} y={cy + 12} textAnchor="middle" className="fill-brand-900 dark:fill-white" fontSize="16" fontWeight="900">
+        {fmt(total)}
+      </text>
+    </g>
+  );
+}
+
+
+// ── Seção Despesas / Receitas do mês ─────────────────────────────────────────
+function SecaoMes({ tipo, lancamentos, loading, onAbrirModal, onRecarregar }) {
+  const [viewTab, setViewTab] = useState("grafico");
+  const isDespesa   = tipo === "despesa";
+  const accentColor = isDespesa ? "#ef4444" : "#10b981";
+  const titulo      = isDespesa ? "Despesas" : "Receitas";
+  const Icon        = isDespesa ? ArrowDownCircle : ArrowUpCircle;
+  const [mesNome, setMesNome] = useState("");
+  useEffect(() => {
+    setMesNome(MESES_FULL[new Date().getMonth()]);
+  }, []);
+
+  const quitados = lancamentos.filter(l => l.status === "pago");
+  const totalQuitado = quitados.reduce((s, l) => s + (l.valor_pago || l.valor || 0), 0);
+
+  const dadosPie = (() => {
+    const mapa = {};
+    quitados.forEach(l => {
+      const cat = l.categorias_financeiras?.nome || "Outros";
+      mapa[cat] = (mapa[cat] || 0) + (l.valor_pago || l.valor || 0);
+    });
+    return Object.entries(mapa).map(([name, value]) => ({ name, value }));
+  })();
+
+  const pieData = dadosPie.length > 0 ? dadosPie : [{ name: "_empty", value: 1 }];
+  const isEmpty  = dadosPie.length === 0;
+
+  async function toggleStatus(id, statusAtual) {
+    const novoStatus = statusAtual === "pago" ? "pendente" : "pago";
+    try {
+      await fetch(`/api/admin/financeiro/lancamentos/${id}`, {
+        method:"PUT", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          status: novoStatus,
+          data_pagamento: novoStatus === "pago" ? new Date().toISOString().slice(0,10) : null,
+        }),
+      });
+      toast.success(novoStatus === "pago" ? "Marcado como quitado!" : "Reaberto");
+      onRecarregar();
+    } catch { toast.error("Erro ao atualizar."); }
+  }
+
+  async function excluir(id) {
+    if (!confirm("Excluir este lançamento?")) return;
+    try {
+      await fetch(`/api/admin/financeiro/lancamentos/${id}`, { method:"DELETE" });
+      toast.success("Excluído."); onRecarregar();
+    } catch { toast.error("Erro ao excluir."); }
+  }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink-100">Financeiro</h1>
-        <p className="text-ink-300 text-sm mt-1">Controle de entradas e saídas da KlionTour</p>
-      </div>
-
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Receita Total",   value: MONEY(totalRev),  icon: <ArrowUpRight size={20} />,   color: "text-emerald-400", bg: "bg-emerald-900/30" },
-          { label: "Despesas Total",  value: MONEY(totalExp),  icon: <ArrowDownRight size={20} />, color: "text-red-400",     bg: "bg-red-900/30"     },
-          { label: "Lucro Líquido",   value: MONEY(netProfit), icon: <DollarSign size={20} />,     color: netProfit >= 0 ? "text-brand-400" : "text-red-400", bg: netProfit >= 0 ? "bg-brand-900/30" : "bg-red-900/30" },
-          { label: "Margem de Lucro", value: `${margin}%`,     icon: <TrendingUp size={20} />,     color: "text-purple-400",  bg: "bg-purple-900/30"  },
-        ].map((k, i) => (
-          <div key={i} className="card p-5 flex items-center gap-4">
-            <div className={`p-2.5 rounded-xl ${k.bg} ${k.color}`}>{k.icon}</div>
-            <div>
-              <div className="text-xs text-ink-300">{k.label}</div>
-              <div className={`text-xl font-extrabold ${k.color}`}>{k.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-dark-400 rounded-xl p-1 w-fit mb-6">
-        {[["overview","Visão Geral"],["receitas","Receitas"],["despesas","Despesas"]].map(([val, label]) => (
-          <button key={val} onClick={() => setTab(val)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition ${tab === val ? "bg-dark-200 shadow text-ink-100" : "text-ink-300 hover:text-ink-200"}`}>
-            {label}
+    <div className="glass-card rounded-3xl overflow-hidden flex flex-col min-h-[340px]">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border dark:border-surface-dark-border">
+        <div className="flex items-center gap-2">
+          <Icon size={16} style={{ color: accentColor }} />
+          <h3 className="text-xs font-black text-brand-900 dark:text-white uppercase tracking-widest">
+            {titulo} de <span className="capitalize">{mesNome || "..."}</span>
+          </h3>
+        </div>
+        <div className="flex items-center gap-1">
+          {[["detalhe","Lista",List],["grafico","Gráfico",BarChart2]].map(([k,label,TabIcon]) => (
+            <button key={k} onClick={() => setViewTab(k)}
+              className={cn("flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                viewTab===k ? "bg-brand-500 text-white shadow-md shadow-brand-500/20" : "text-steel-500 hover:text-brand-900 dark:hover:text-white")}>
+              <TabIcon size={12} />{label}
+            </button>
+          ))}
+          <div className="w-px h-4 bg-surface-border dark:bg-surface-dark-border mx-2" />
+          <button onClick={onRecarregar} title="Atualizar"
+            className="p-2 rounded-xl text-steel-500 hover:text-brand-500 hover:bg-brand-500/10 transition-all">
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
-        ))}
+          <button onClick={() => onAbrirModal()} title="Novo lançamento"
+            className="p-2 rounded-xl text-steel-500 hover:text-brand-500 hover:bg-brand-500/10 transition-all">
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
 
-      {/* Overview */}
-      {tab === "overview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 card p-6">
-            <h2 className="font-bold text-ink-100 mb-5">Receitas vs Despesas por Mês</h2>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthlyData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d4437" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#9ebfaa" }} />
-                <YAxis tick={{ fontSize: 12, fill: "#9ebfaa" }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-                <Tooltip
-                  formatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR")}`}
-                  contentStyle={{ background: "#1a2b20", border: "1px solid #2d4437", borderRadius: 8 }}
-                  labelStyle={{ color: "#e4f0ea" }}
-                />
-                <Legend wrapperStyle={{ color: "#9ebfaa" }} />
-                <Bar dataKey="receitas" name="Receitas" fill="#30b27f" radius={[4,4,0,0]} />
-                <Bar dataKey="despesas" name="Despesas" fill="#ef4444" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center py-16">
+          <RefreshCw size={24} className="animate-spin text-brand-500" />
+        </div>
+      ) : viewTab === "grafico" ? (
+        <div className="flex flex-col items-center px-6 pt-4 pb-6">
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%" cy="50%"
+                innerRadius={68} outerRadius={98}
+                paddingAngle={isEmpty ? 0 : (dadosPie.length > 1 ? 3 : 0)}
+                dataKey="value"
+                stroke="transparent"
+                startAngle={90} endAngle={-270}
+                animationBegin={0}
+                animationDuration={600}
+              >
+                <RechartsLabel content={({ viewBox }) => (
+                  <CenterLabel
+                    viewBox={viewBox}
+                    total={totalQuitado}
+                    linha1={mesNome.slice(0,3)}
+                  />
+                )} position="center" />
+                {pieData.map((entry, idx) => (
+                  <Cell
+                    key={idx}
+                    fill={isEmpty ? "rgba(0,0,0,0.05)" : CORES[idx % CORES.length]}
+                  />
+                ))}
+              </Pie>
+              {!isEmpty && <CustomTooltip />}
+            </PieChart>
+          </ResponsiveContainer>
+
+          <div className="w-full grid grid-cols-2 gap-x-6 gap-y-3 mt-4">
+            {dadosPie.map((d, idx) => (
+              <div key={d.name} className="flex items-center gap-2 min-w-0">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: CORES[idx % CORES.length] }} />
+                <span className="text-[10px] text-steel-500 font-bold uppercase tracking-widest truncate flex-1">{d.name}</span>
+                <span className="text-[10px] text-brand-900 dark:text-white font-black">{fmt(d.value)}</span>
+              </div>
+            ))}
           </div>
 
-          <div className="card p-6">
-            <h2 className="font-bold text-ink-100 mb-5">Despesas por Categoria</h2>
-            {expPie.length > 0 ? (
-              <>
-                <ResponsiveContainer width="100%" height={200}>
-                  <RechartsPie>
-                    <Pie data={expPie} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value">
-                      {expPie.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip formatter={(v) => `R$ ${Number(v).toLocaleString("pt-BR")}`} contentStyle={{ background: "#1a2b20", border: "1px solid #2d4437", borderRadius: 8 }} />
-                  </RechartsPie>
-                </ResponsiveContainer>
-                <div className="space-y-1.5 mt-2">
-                  {expPie.map((e, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: e.color }} />
-                        <span className="text-ink-300">{e.name}</span>
+          <div className="w-full mt-6 pt-4 border-t border-surface-border dark:border-surface-dark-border grid grid-cols-2 gap-4 text-[10px] font-black uppercase tracking-widest">
+            <div className="flex justify-between">
+              <span className="text-steel-400">Quitado</span>
+              <span style={{ color: accentColor }}>{fmt(totalQuitado)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-steel-400">Pendente</span>
+              <span className="text-brand-900 dark:text-white">
+                {fmt(lancamentos.filter(l=>l.status!=="pago").reduce((s,l)=>s+(l.valor||0),0))}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col flex-1">
+          {lancamentos.length === 0 ? (
+            <button onClick={() => onAbrirModal()}
+              className="flex-1 flex flex-col items-center justify-center gap-3 py-16 text-steel-400 hover:text-brand-500 transition-colors group">
+              <div className="w-10 h-10 rounded-2xl border-2 border-dashed border-current flex items-center justify-center group-hover:border-brand-500/50 transition-colors">
+                <Plus size={18} />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest">+ Adicionar {isDespesa ? "despesa" : "receita"}</span>
+            </button>
+          ) : (
+            <>
+              <div className="divide-y divide-surface-border dark:divide-surface-dark-border flex-1">
+                {lancamentos.map(l => {
+                  const pago = l.status === "pago";
+                  return (
+                    <div key={l.id} className="flex items-center gap-4 px-6 py-4 hover:bg-brand-500/[0.02] transition-colors group">
+                      <button onClick={() => toggleStatus(l.id, l.status)}
+                        className={cn("w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all",
+                          pago ? "bg-brand-500 border-brand-500 text-white" : "border-surface-border dark:border-surface-dark-border hover:border-brand-500")}>
+                        {pago && <CheckCircle size={14} />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-medium truncate", pago ? "text-steel-400 line-through" : "text-brand-900 dark:text-white")}>
+                          {l.descricao}
+                        </p>
+                        <p className="text-[10px] text-steel-500 font-bold uppercase tracking-widest">{l.categorias_financeiras?.nome || "Sem categoria"}</p>
                       </div>
-                      <span className="font-medium text-ink-100">{MONEY(e.value)}</span>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-black" style={{ color: pago ? "inherit" : accentColor }}>
+                          {fmt(l.valor_pago || l.valor)}
+                        </p>
+                        <p className="text-[9px] font-bold text-steel-400 uppercase">
+                          {pago ? "Quitado" : `Vence ${new Date(l.data_vencimento).toLocaleDateString()}`}
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="text-ink-400 text-sm text-center pt-10">Nenhuma despesa registrada</p>
-            )}
-          </div>
+                  );
+                })}
+              </div>
+              <div className="px-6 py-4 border-t border-surface-border dark:border-surface-dark-border flex items-center justify-between bg-surface-subtle/30 dark:bg-surface-dark-subtle/10">
+                <button onClick={() => onAbrirModal()}
+                   className="text-[10px] font-black uppercase tracking-widest text-steel-500 hover:text-brand-500 transition-colors flex items-center gap-1">
+                  <Plus size={12} /> Adicionar novo
+                </button>
+                <span className="text-[10px] font-black uppercase tracking-widest text-steel-500">
+                  Total: <span className="text-brand-900 dark:text-white">{fmt(lancamentos.reduce((s,l)=>s+(l.valor||0),0))}</span>
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Receitas */}
-      {tab === "receitas" && (
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="font-bold text-ink-100">Entradas / Receitas</h2>
-              <p className="text-sm text-ink-300">Total: <span className="font-semibold text-emerald-400">{MONEY(totalRev)}</span></p>
-            </div>
-            <button onClick={() => setShowAddRev(true)} className="btn-primary text-sm py-2">
-              <Plus size={16} /> Adicionar
-            </button>
-          </div>
+// ── Dashboard principal ──────────────────────────────────────────────────────
+export default function AdminFinanceiroPage() {
+  const [modal, setModal]       = useState(null);
+  const [mounted, setMounted]   = useState(false);
 
-          {showAddRev && (
-            <div className="bg-dark-300 border border-dark-50 rounded-xl p-4 mb-5 grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input value={newRev.description} onChange={e => setNewRev(p => ({...p, description: e.target.value}))}
-                className="input-field text-sm md:col-span-2" placeholder="Descrição" />
-              <input type="number" value={newRev.amount} onChange={e => setNewRev(p => ({...p, amount: e.target.value}))}
-                className="input-field text-sm" placeholder="Valor (R$)" />
-              <input type="date" value={newRev.date} onChange={e => setNewRev(p => ({...p, date: e.target.value}))}
-                className="input-field text-sm" />
-              <select value={newRev.category} onChange={e => setNewRev(p => ({...p, category: e.target.value}))}
-                className="input-field text-sm">
-                {Object.entries(REVENUE_CATEGORIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-              </select>
-              <div className="flex gap-2 md:col-span-3">
-                <button onClick={addRevenue} disabled={savingRev} className="btn-primary text-sm py-2 flex-1">
-                  {savingRev ? "Salvando..." : "Salvar"}
-                </button>
-                <button onClick={() => setShowAddRev(false)} className="btn-outline text-sm py-2">Cancelar</button>
-              </div>
-            </div>
-          )}
+  useEffect(() => { setMounted(true); }, []);
 
-          <div className="space-y-2">
-            {revenues.sort((a,b) => new Date(b.date) - new Date(a.date)).map(r => (
-              <div key={r.id} className="flex items-center justify-between py-3 border-b border-dark-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-ink-100">{r.description}</p>
-                  <p className="text-xs text-ink-400">
-                    {new Date(r.date + "T12:00:00").toLocaleDateString("pt-BR")} · {REVENUE_CATEGORIES[r.category]?.label ?? r.category}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-emerald-400">+ {MONEY(r.amount)}</span>
-                  <button onClick={() => removeRev(r.id)} className="text-ink-400 hover:text-red-400 transition">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </div>
-            ))}
+  const mesISO = useMemo(() => new Date().toISOString().slice(0,7), []);
+  const mesAtual = useMemo(() => new Date().toLocaleString("pt-BR", { month:"long", year:"numeric" }), []);
+
+  const { dashboard: d, isLoading: loadDash, mutate: mutDash } = useFinanceiroDashboard();
+  const { lancamentos: despesas, isLoading: loadDesp, mutate: mutDesp } = useLancamentos({ tipo: 'despesa', mes: mesISO, limit: 50 });
+  const { lancamentos: receitas, isLoading: loadRec, mutate: mutRec } = useLancamentos({ tipo: 'receita', mes: mesISO, limit: 50 });
+
+  const loading = loadDash;
+  const lancLoading = loadDesp || loadRec;
+
+  function recarregar() { 
+    mutDash(); 
+    mutDesp(); 
+    mutRec(); 
+  }
+
+  const grafico = MESES.map((mes,i) => ({
+    mes,
+    Receita: d?.grafico_receitas?.[i] || 0,
+    Despesa: d?.grafico_despesas?.[i] || 0,
+  }));
+
+  if (!mounted || loading) {
+    return (
+      <div className="space-y-8 pb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-3xl text-brand-900 dark:text-white flex items-center gap-3">Financeiro</h1>
           </div>
         </div>
-      )}
-
-      {/* Despesas */}
-      {tab === "despesas" && (
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="font-bold text-ink-100">Saídas / Despesas</h2>
-              <p className="text-sm text-ink-300">Total: <span className="font-semibold text-red-400">{MONEY(totalExp)}</span></p>
-            </div>
-            <button onClick={() => setShowAddExp(true)} className="btn-primary text-sm py-2">
-              <Plus size={16} /> Adicionar
-            </button>
-          </div>
-
-          {showAddExp && (
-            <div className="bg-dark-300 border border-dark-50 rounded-xl p-4 mb-5 grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input value={newExp.description} onChange={e => setNewExp(p => ({...p, description: e.target.value}))}
-                className="input-field text-sm md:col-span-2" placeholder="Descrição" />
-              <input type="number" value={newExp.amount} onChange={e => setNewExp(p => ({...p, amount: e.target.value}))}
-                className="input-field text-sm" placeholder="Valor (R$)" />
-              <input type="date" value={newExp.date} onChange={e => setNewExp(p => ({...p, date: e.target.value}))}
-                className="input-field text-sm" />
-              <select value={newExp.category} onChange={e => setNewExp(p => ({...p, category: e.target.value}))}
-                className="input-field text-sm">
-                {Object.entries(EXPENSE_CATEGORIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
-              </select>
-              <div className="flex gap-2 md:col-span-3">
-                <button onClick={addExpense} disabled={savingExp} className="btn-primary text-sm py-2 flex-1">
-                  {savingExp ? "Salvando..." : "Salvar"}
-                </button>
-                <button onClick={() => setShowAddExp(false)} className="btn-outline text-sm py-2">Cancelar</button>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {expenses.sort((a,b) => new Date(b.date) - new Date(a.date)).map(e => (
-              <div key={e.id} className="flex items-center justify-between py-3 border-b border-dark-50 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-ink-100">{e.description}</p>
-                  <p className="text-xs text-ink-400">
-                    {new Date(e.date + "T12:00:00").toLocaleDateString("pt-BR")} · {EXPENSE_CATEGORIES[e.category]?.label ?? e.category}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-red-400">- {MONEY(e.amount)}</span>
-                  <button onClick={() => removeExp(e.id)} className="text-ink-400 hover:text-red-400 transition">
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <RefreshCw size={32} className="animate-spin text-brand-500" />
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 pb-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-serif text-3xl text-brand-900 dark:text-white flex items-center gap-3">
+             Financeiro
+          </h1>
+          <p className="text-sm text-steel-500 mt-1">Resumo financeiro KlionTour</p>
+        </div>
+        <button onClick={recarregar} className="p-3 rounded-2xl bg-surface-subtle dark:bg-surface-dark-subtle border border-surface-border dark:border-surface-dark-border text-steel-500 hover:text-brand-900 dark:hover:text-white transition-all">
+          <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+        </button>
+      </div>
+
+      <>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          {[
+            { label:"Saldo Atual", value:fmt(d?.saldo_atual),    icon:DollarSign,    color:"#470002", bg:"rgba(71,0,2,0.1)" },
+            { label:"A Receber",   value:fmt(d?.a_receber_mes),  icon:TrendingUp,    color:"#10b981", bg:"rgba(16,185,129,0.1)"   },
+            { label:"A Pagar",     value:fmt(d?.a_pagar_mes),    icon:TrendingDown,  color:"#ef4444", bg:"rgba(239,68,68,0.1)"   },
+            { label:"Vencidos",    value:d?.vencidos_pagar||0,   icon:AlertTriangle, color:"#f59e0b", bg:"rgba(245,158,11,0.1)", suffix:" conta(s)" },
+          ].map(c => (
+            <div key={c.label} className="glass-card rounded-3xl p-6 flex items-start gap-4 shadow-sm border-surface-border dark:border-surface-dark-border">
+              <div style={{ width:48, height:48, borderRadius:16, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                <c.icon size={20} style={{ color:c.color }} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-steel-400 uppercase tracking-widest mb-1">{c.label}</p>
+                <p className="text-2xl font-serif font-medium text-brand-900 dark:text-white leading-none">{c.value}{c.suffix||""}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Gráfico anual */}
+        <div className="glass-card rounded-3xl p-8 border-surface-border dark:border-surface-dark-border shadow-sm">
+          <h2 className="text-xs font-black text-brand-900 dark:text-white uppercase tracking-widest mb-8">Fluxo de Caixa em {new Date().getFullYear()}</h2>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={grafico} margin={{ top:5, right:10, left:-15, bottom:0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+              <XAxis dataKey="mes" tick={{ fill:"#94a3b8", fontSize:10, fontWeight:700 }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={fmtShort} tick={{ fill:"#94a3b8", fontSize:10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ fontSize:10, fontWeight:700, textTransform:"uppercase", letterSpacing:'0.1em', paddingTop:'20px' }} />
+              <Line type="monotone" dataKey="Receita" stroke="#10b981" strokeWidth={3} dot={{ r:4, fill:"#10b981", strokeWidth:2, stroke:'#fff' }} />
+              <Line type="monotone" dataKey="Despesa" stroke="#ef4444" strokeWidth={3} dot={{ r:4, fill:"#ef4444", strokeWidth:2, stroke:'#fff' }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Resumo do mês */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { titulo:"Pagamentos",   sub:mesAtual, itens:[
+              { l:"À Pagar",   v:fmt(d?.a_pagar_mes),    c:"#ef4444" },
+              { l:"Pago",      v:fmt(d?.pago_mes),       c:"#10b981" },
+              { l:"Em Atraso", v:d?.vencidos_pagar||0,   c:"#f59e0b", suf:" conta(s)" },
+            ]},
+            { titulo:"Recebimentos", sub:mesAtual, itens:[
+              { l:"À Receber", v:fmt(d?.a_receber_mes),  c:"#ef4444" },
+              { l:"Recebido",  v:fmt(d?.recebido_mes),   c:"#10b981" },
+              { l:"Em Atraso", v:"—",                    c:"#f59e0b" },
+            ]},
+            { titulo:"Saldos",       sub:mesAtual, itens:[
+              { l:"Realizado",  v:fmt(d?.saldo_realizado_mes), c:"#470002" },
+              { l:"Previsto",   v:fmt(d?.saldo_previsto_mes),  c:"#94a3b8" },
+            ]},
+          ].map(card => (
+            <div key={card.titulo} className="glass-card rounded-3xl p-6 border-surface-border dark:border-surface-dark-border shadow-sm">
+              <div className="flex items-baseline gap-2 mb-6">
+                <h3 className="text-xs font-black text-brand-900 dark:text-white uppercase tracking-widest">{card.titulo}</h3>
+                <span className="text-[10px] text-steel-500 capitalize font-bold">{card.sub}</span>
+              </div>
+              <div className="flex gap-8">
+                {card.itens.map(it => (
+                  <div key={it.l}>
+                    <p className="text-[10px] font-bold text-steel-400 uppercase tracking-widest mb-1">{it.l}</p>
+                    <p className="text-lg font-black" style={{ color:it.c }}>{it.v}{it.suf||""}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SecaoMes tipo="despesa" lancamentos={despesas} loading={lancLoading}
+            onAbrirModal={(original) => setModal({ tipo: "despesa", original })} onRecarregar={recarregar} />
+          <SecaoMes tipo="receita" lancamentos={receitas} loading={lancLoading}
+            onAbrirModal={(original) => setModal({ tipo: "receita", original })} onRecarregar={recarregar} />
+        </div>
+      </>
+
+      {modal && (
+        <ModalLancamento 
+          tipo={modal.tipo} 
+          original={modal.original} 
+          onClose={() => setModal(null)} 
+          onSalvo={recarregar} 
+        />
       )}
     </div>
   );

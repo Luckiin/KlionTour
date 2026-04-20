@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Car, Plus, Search, ChevronDown, CheckCircle,
   Trash2, Users, Wrench, Shield, BarChart2, Loader2,
 } from "lucide-react";
 import { getVeiculos, createVeiculo, deactivateVeiculo } from "@/lib/services/veiculos";
+import Reveal from "@/components/motion/Reveal";
 
 // ── Helpers ─────────────────────────────────────────────
+const MONEY = (v) => "R$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 const maskPlaca   = (v = "") => v.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,7).replace(/^([A-Z]{3})(\d.*)$/,"$1-$2");
 const maskPhone   = (v = "") => v.replace(/\D/g,"").replace(/(\d{2})(\d{1})(\d{4})(\d{4})/,"($1) $2 $3-$4").slice(0,16);
 const maskMoney   = (v = "") => {
@@ -90,93 +93,137 @@ function Section({ title, icon, children, cols = 2 }) {
 function VehicleCard({ v, onDelete }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="card">
-      <div className="flex items-center justify-between p-4 cursor-pointer" onClick={() => setOpen(!open)}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-900 border border-brand-700 flex items-center justify-center text-brand-400">
-            <Car size={20} />
+    <div className={`card overflow-hidden transition-all duration-300 ${open ? "ring-2 ring-brand-500/20 shadow-soft-lg" : ""}`}>
+      <div 
+        className={`flex items-center justify-between p-5 cursor-pointer transition-colors ${open ? "bg-brand-500/5" : "hover:bg-brand-500/5 dark:hover:bg-brand-300/5 text-brand-900 dark:text-white"}`} 
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-500 flex items-center justify-center shrink-0">
+            <Car size={22} />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-ink-100">
-              {v.marca} {v.modelo} <span className="text-ink-400">· {v.placa}</span>
+          <div className="min-w-0">
+            <p className="font-bold text-brand-900 dark:text-white flex items-center gap-2">
+              {v.marca} {v.modelo} 
+              <span className="px-2 py-0.5 rounded-lg bg-surface-subtle dark:bg-surface-dark-subtle text-steel-500 dark:text-steel-400 text-[10px] font-bold tracking-widest uppercase border border-surface-border dark:border-surface-dark-border">
+                {v.placa}
+              </span>
             </p>
-            <p className="text-xs text-ink-400">
-              {v.ano} · {v.cor} · {v.quantidadeMaximaPassageiros} passageiros
-              {v.terceirizado && <span className="ml-2 text-yellow-400">· Terceirizado</span>}
+            <p className="text-[10px] uppercase font-bold tracking-widest text-steel-400 mt-1 flex items-center gap-2">
+              {v.ano} · {v.cor} · {v.quantidade_maxima_passageiros} passageiros
+              {v.terceirizado && <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-black"><Shield size={10} /> Terceirizado</span>}
             </p>
           </div>
         </div>
-        <ChevronDown size={16} className={`text-ink-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${open ? "bg-brand-500 text-white rotate-180" : "bg-steel-100 dark:bg-steel-800 text-steel-400 group-hover:bg-brand-500 group-hover:text-white"}`}>
+          <ChevronDown size={14} />
+        </div>
       </div>
-      {open && (
-        <div className="border-t border-dark-50 px-4 pb-4 pt-3 space-y-4">
-          {/* Identificação */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            {[
-              ["Chassi",   v.chassi],
-              ["Renavam",  v.renavam],
-              ["Val. Veículo", v.valorVeiculo],
-              ["Val. Seguro",  v.valorSeguro],
-            ].map(([k,val]) => (
-              <div key={k}>
-                <span className="text-ink-400">{k}</span>
-                <p className="text-ink-100 font-medium mt-0.5">{val || "—"}</p>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-surface-border dark:border-surface-dark-border"
+          >
+            <div className="p-6 space-y-8 bg-white/50 dark:bg-surface-dark-elevated/50 backdrop-blur-sm">
+              {/* Identificação Geral */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {[
+                  ["Chassi",   v.chassi],
+                  ["Renavam",  v.renavam],
+                  ["Val. Aeronave", v.valor_veiculo ? MONEY(v.valor_veiculo) : null],
+                  ["Seguro Anual",  v.valor_seguro ? MONEY(v.valor_seguro) : null],
+                ].map(([k,val]) => (
+                  <div key={k}>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-steel-400 block mb-1">{k}</span>
+                    <p className="text-sm font-bold text-brand-900 dark:text-white">{val || "—"}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          {/* Vistorias */}
-          <div>
-            <p className="text-xs text-brand-400 font-semibold uppercase tracking-wide mb-2">Vistorias</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {[
-                ["Vistoria Agerba",     v.valorVistoria],
-                ["Licenciamento",       v.valorLicenciamento],
-                ["GTX Vistoria",        v.gtxVistoria],
-                ["Renovação Simpl.",    v.renovacaoSimplificada],
-              ].map(([k,val]) => (
-                <div key={k}>
-                  <span className="text-ink-400">{k}</span>
-                  <p className="text-ink-100 font-medium mt-0.5">{val || "—"}</p>
+
+              {/* Vistorias Agerba */}
+              <div className="p-5 rounded-2xl bg-surface-subtle/50 dark:bg-surface-dark-subtle/30 border border-surface-border dark:border-surface-dark-border">
+                <div className="flex items-center gap-2 mb-4">
+                  <Shield size={14} className="text-brand-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-900 dark:text-white">Taxas e Vistorias</span>
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Ficha Técnica */}
-          <div>
-            <p className="text-xs text-brand-400 font-semibold uppercase tracking-wide mb-2">Ficha Técnica</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              {[
-                ["KM/mês",           v.mediaKmRodadoMes ? `${v.mediaKmRodadoMes} km` : "—"],
-                ["KM/litro",         v.combustivelPorLitro ? `${v.combustivelPorLitro} km/l` : "—"],
-                ["Revisão (20k km)", v.revisaoVeiculo],
-                ["Pneus (60k km)",   v.pneusVeiculo],
-                ["Manutenção",       v.manutencaoVeiculo],
-                ["Alinhamento",      v.alinhamentoPneu],
-                ["Balanceamento",    v.balanceamento],
-                ["Lavagem",          v.lavagem],
-              ].map(([k,val]) => (
-                <div key={k}>
-                  <span className="text-ink-400">{k}</span>
-                  <p className="text-ink-100 font-medium mt-0.5">{val || "—"}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {[
+                    ["Vistoria Agerba",     v.valor_vistoria ? MONEY(v.valor_vistoria) : null],
+                    ["Licenciamento",       v.valor_licenciamento ? MONEY(v.valor_licenciamento) : null],
+                    ["GTX Vistoria",        v.gtx_vistoria ? MONEY(v.gtx_vistoria) : null],
+                    ["Renovação Simpl.",    v.renovacao_simplificada ? MONEY(v.renovacao_simplificada) : null],
+                  ].map(([k,val]) => (
+                    <div key={k}>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-steel-400 block mb-1">{k}</span>
+                      <p className="text-xs font-bold text-brand-900 dark:text-white">{val || "—"}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-          {v.terceirizado && (
-            <div className="bg-yellow-900/20 border border-yellow-800 rounded-xl p-3">
-              <p className="text-xs text-yellow-400 font-semibold mb-1">Veículo Terceirizado</p>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div><span className="text-ink-400">CPF/CNPJ</span><p className="text-ink-100">{v.cpfCnpj}</p></div>
-                <div><span className="text-ink-400">Proprietário</span><p className="text-ink-100">{v.proprietario}</p></div>
-                <div><span className="text-ink-400">Telefone</span><p className="text-ink-100">{v.telefone}</p></div>
+              </div>
+
+              {/* Ficha Técnica e Operacional */}
+              <div>
+                <div className="flex items-center gap-2 mb-4 ml-1">
+                  <BarChart2 size={14} className="text-brand-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-900 dark:text-white">Indicadores e Manutenção</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-6">
+                  {[
+                    ["KM/mês Médio",           v.media_km_rodado_mes ? `${v.media_km_rodado_mes} km` : "—"],
+                    ["Eficiência Combustível", v.combustivel_por_litro ? `${v.combustivel_por_litro} km/l` : "—"],
+                    ["Revisão Preventiva", v.revisao_veiculo ? MONEY(v.revisao_veiculo) : null],
+                    ["Troca de Pneus",   v.pneus_veiculo ? MONEY(v.pneus_veiculo) : null],
+                    ["Manutenção Geral",   v.manutencao_veiculo ? MONEY(v.manutencao_veiculo) : null],
+                    ["Lavagem Técnica",          v.lavagem ? MONEY(v.lavagem) : null],
+                    ["Alinhamento",      v.alinhamento_pneu ? MONEY(v.alinhamento_pneu) : null],
+                    ["Balanceamento",    v.balanceamento ? MONEY(v.balanceamento) : null],
+                  ].map(([k,val]) => (
+                    <div key={k}>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-steel-400 block mb-1">{k}</span>
+                      <p className="text-xs font-bold text-brand-900 dark:text-white">{val || "—"}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {v.terceirizado && (
+                <div className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="space-y-4 flex-1">
+                    <div className="flex items-center gap-2">
+                       <Users size={16} className="text-amber-600 dark:text-amber-400" />
+                       <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">Proprietário Parceiro</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-steel-400 block mb-1">CPF/CNPJ</span>
+                        <p className="text-xs font-bold text-brand-900 dark:text-white">{v.cpf_cnpj_proprietario || "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-steel-400 block mb-1">Titular</span>
+                        <p className="text-xs font-bold text-brand-900 dark:text-white truncate">{v.proprietario || "—"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-steel-400 block mb-1">Telefone</span>
+                        <p className="text-xs font-bold text-brand-900 dark:text-white">{v.telefone_proprietario || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end pt-4 border-t border-surface-border dark:border-surface-dark-border">
+                <button onClick={() => onDelete(v.id)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-500/10 transition-colors">
+                  <Trash2 size={13} /> Desativar Veículo
+                </button>
               </div>
             </div>
-          )}
-          <button onClick={() => onDelete(v.id)} className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 transition">
-            <Trash2 size={13} /> Remover veículo
-          </button>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -194,7 +241,7 @@ export default function VeiculosPage() {
   useEffect(() => {
     getVeiculos({ apenasAtivos: false })
       .then(setVeiculos)
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -265,56 +312,65 @@ export default function VeiculosPage() {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-ink-100">Veículos</h1>
-          <p className="text-ink-400 text-sm mt-1">{veiculos.length} veículo{veiculos.length !== 1 ? "s" : ""} cadastrado{veiculos.length !== 1 ? "s" : ""}</p>
+          <Reveal direction="down">
+            <h1 className="text-3xl font-serif font-medium text-brand-900 dark:text-white">Veículos</h1>
+            <p className="text-steel-500 dark:text-steel-400 text-sm mt-1">Gestão da frota própria e terceirizada KlionTour</p>
+          </Reveal>
         </div>
         <button onClick={() => setTab(tab === "cadastro" ? "lista" : "cadastro")}
-          className={tab === "cadastro" ? "btn-outline" : "btn-primary"}>
-          {tab === "cadastro" ? "← Voltar à lista" : <><Plus size={16} /> Cadastrar Veículo</>}
+          className={tab === "cadastro" ? "btn-outline py-3 px-6" : "btn-primary py-3 px-6"}>
+          {tab === "cadastro" ? "← Voltar à lista" : <><Plus size={18} /> Cadastrar Veículo</>}
         </button>
       </div>
 
       {success && (
-        <div className="flex items-center gap-2 bg-brand-900/40 border border-brand-700 text-brand-400 rounded-xl px-4 py-3 text-sm mb-5">
-          <CheckCircle size={16} /> Veículo cadastrado com sucesso!
-        </div>
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl px-6 py-4 text-sm font-bold uppercase tracking-widest">
+          <CheckCircle size={18} /> Veículo cadastrado com sucesso!
+        </motion.div>
       )}
 
       {/* ── LISTA ──────────────────────────────────── */}
       {tab === "lista" && (
-        <div className="space-y-4">
-          <div className="card p-4">
+        <div className="space-y-6">
+          <div className="card p-6 group focus-within:ring-4 focus-within:ring-brand-500/5 transition-all">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-steel-400 group-focus-within:text-brand-500 transition-colors" />
               <input value={search} onChange={e => setSearch(e.target.value)}
-                className="input-field input-icon text-sm" placeholder="Buscar por placa, modelo ou marca..." />
+                className="input-field input-icon" placeholder="Buscar por placa, modelo ou marca da aeronave/veículo..." />
             </div>
           </div>
+          
           {loading ? (
-            <div className="card p-14 flex items-center justify-center">
-              <Loader2 size={28} className="animate-spin text-brand-500" />
+            <div className="card p-24 flex flex-col items-center justify-center border-dashed">
+              <Loader2 size={32} className="animate-spin text-brand-500 mb-4" />
+              <p className="text-sm font-bold text-steel-500 uppercase tracking-widest">Carregando Frota...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="card p-14 text-center">
-              <Car size={48} className="text-dark-50 mx-auto mb-3" />
-              <p className="text-ink-400 text-sm">Nenhum veículo encontrado</p>
-              <button onClick={() => setTab("cadastro")} className="btn-primary mt-4 mx-auto w-fit text-sm">
-                <Plus size={15} /> Cadastrar primeiro veículo
+            <div className="card p-24 text-center border-dashed opacity-60">
+              <Car size={48} className="text-steel-300 dark:text-steel-600 mx-auto mb-4" />
+              <h4 className="font-serif text-2xl text-brand-900 dark:text-white mb-2">Nenhum veículo</h4>
+              <p className="text-steel-500 mb-6">Não encontramos veículos registrados ou ativos.</p>
+              <button onClick={() => setTab("cadastro")} className="btn-primary py-3 px-8 text-xs font-bold uppercase tracking-widest mx-auto">
+                <Plus size={16} /> Cadastrar Primeiro Veículo
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {filtered.map(v => (
-                <VehicleCard key={v.id} v={v}
-                  onDelete={async (id) => {
-                    try {
-                      await deactivateVeiculo(id);
-                      setVeiculos(p => p.filter(x => x.id !== id));
-                    } catch (err) { alert(err.message); }
-                  }} />
+            <div className="grid grid-cols-1 gap-4">
+              {filtered.map((v, i) => (
+                <Reveal key={v.id} direction="up" delay={i * 0.03}>
+                  <VehicleCard v={v}
+                    onDelete={async (id) => {
+                      if(!confirm("Deseja realmente remover este veículo?")) return;
+                      try {
+                        await deactivateVeiculo(id);
+                        setVeiculos(p => p.filter(x => x.id !== id));
+                      } catch (err) { alert(err.message); }
+                    }} />
+                </Reveal>
               ))}
             </div>
           )}
@@ -323,133 +379,142 @@ export default function VeiculosPage() {
 
       {/* ── CADASTRO ───────────────────────────────── */}
       {tab === "cadastro" && (
-        <div className="card p-6 md:p-8">
-          <h2 className="text-lg font-bold text-ink-100 mb-6 flex items-center gap-2">
-            <Car size={20} className="text-brand-400" /> Novo Veículo
-          </h2>
-
-          {/* Dados Básicos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Placa *">
-              <Input value={form.placa} onChange={v => upd("placa", maskPlaca(v))} placeholder="AAA-0000" />
-              {errors.placa && <p className="text-red-400 text-xs mt-1">{errors.placa}</p>}
-            </Field>
-            <Field label="Modelo *">
-              <Input value={form.modelo} onChange={v => upd("modelo", v)} placeholder="Sprinter 415" />
-              {errors.modelo && <p className="text-red-400 text-xs mt-1">{errors.modelo}</p>}
-            </Field>
-            <Field label="Marca *">
-              <Select value={form.marca} onChange={v => upd("marca", v)} options={MARCAS} />
-              {errors.marca && <p className="text-red-400 text-xs mt-1">{errors.marca}</p>}
-            </Field>
-            <Field label="Ano *">
-              <Input value={form.ano} onChange={v => upd("ano", maskAno(v))} placeholder="2023" />
-              {errors.ano && <p className="text-red-400 text-xs mt-1">{errors.ano}</p>}
-            </Field>
-            <Field label="Chassi">
-              <Input value={form.chassi} onChange={v => upd("chassi", v.toUpperCase().slice(0,17))} placeholder="17 caracteres" />
-            </Field>
-            <Field label="Renavam">
-              <Input value={form.renavam} onChange={v => upd("renavam", maskRenavam(v))} placeholder="00000000000" />
-            </Field>
-            <Field label="Cor">
-              <Select value={form.cor} onChange={v => upd("cor", v)} options={CORES} />
-            </Field>
-            <Field label="Qtd. Máx. Passageiros *">
-              <Input type="number" value={form.quantidadeMaximaPassageiros}
-                onChange={v => upd("quantidadeMaximaPassageiros", v)} placeholder="15" />
-              {errors.qtd && <p className="text-red-400 text-xs mt-1">{errors.qtd}</p>}
-            </Field>
-            <Field label="Valor do Veículo (R$)">
-              <MoneyInput value={form.valorVeiculo} onChange={v => upd("valorVeiculo", v)} />
-            </Field>
-            <Field label="Valor do Seguro por Ano (R$)">
-              <MoneyInput value={form.valorSeguro} onChange={v => upd("valorSeguro", v)} />
-            </Field>
-          </div>
-
-          {/* Terceirizado */}
-          <div className="mt-6">
-            <label className="flex items-center gap-3 cursor-pointer w-fit">
-              <div className={`w-11 h-6 rounded-full transition-colors relative ${form.terceirizado ? "bg-brand-500" : "bg-dark-50"}`}
-                onClick={() => upd("terceirizado", !form.terceirizado)}>
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.terceirizado ? "translate-x-5" : ""}`} />
-              </div>
-              <span className="text-sm font-medium text-ink-200">Veículo Terceirizado</span>
-            </label>
-          </div>
-
-          {form.terceirizado && (
-            <div className="mt-4 p-4 bg-yellow-900/10 border border-yellow-800/50 rounded-xl">
-              <p className="text-xs text-yellow-400 font-semibold uppercase tracking-wide mb-3">Dados do Proprietário</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Field label="CPF / CNPJ">
-                  <Input value={form.cpfCnpj} onChange={v => upd("cpfCnpj", v)} placeholder="000.000.000-00" />
-                </Field>
-                <Field label="Proprietário">
-                  <Input value={form.proprietario} onChange={v => upd("proprietario", v)} placeholder="Nome do proprietário" />
-                </Field>
-                <Field label="Telefone">
-                  <Input value={form.telefone} onChange={v => upd("telefone", maskPhone(v))} placeholder="(00) 0 0000-0000" />
-                </Field>
-              </div>
+        <div className="card overflow-hidden">
+          <div className="p-8 border-b border-surface-border dark:border-surface-dark-border bg-surface-subtle/30 dark:bg-surface-dark-subtle/20 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center">
+              <Car size={24} />
             </div>
-          )}
+            <div>
+              <h2 className="text-xl font-serif font-medium text-brand-900 dark:text-white">Novo Veículo</h2>
+              <p className="text-xs text-steel-500 dark:text-steel-400 mt-0.5">Informe os dados técnicos e operacionais abaixo</p>
+            </div>
+          </div>
 
-          {/* Vistorias */}
-          <Section title="Vistorias Agerba" icon={<Shield size={14} />} cols={2}>
-            <Field label="Valor Vistoria Agerba (R$)">
-              <MoneyInput value={form.valorVistoria} onChange={v => upd("valorVistoria", v)} />
-            </Field>
-            <Field label="Valor Licenciamento Agerba (R$)">
-              <MoneyInput value={form.valorLicenciamento} onChange={v => upd("valorLicenciamento", v)} />
-            </Field>
-            <Field label="GTX Vistoria (R$)">
-              <MoneyInput value={form.gtxVistoria} onChange={v => upd("gtxVistoria", v)} />
-            </Field>
-            <Field label="Renovação Simplificada Agerba (R$)">
-              <MoneyInput value={form.renovacaoSimplificada} onChange={v => upd("renovacaoSimplificada", v)} />
-            </Field>
-          </Section>
+          <div className="p-8 md:p-10">
+            {/* Dados Básicos */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Field label="Placa *" col="md:col-span-1">
+                <Input value={form.placa} onChange={v => upd("placa", maskPlaca(v))} placeholder="AAA-0000" />
+                {errors.placa && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-tight">{errors.placa}</p>}
+              </Field>
+              <Field label="Modelo *" col="md:col-span-1">
+                <Input value={form.modelo} onChange={v => upd("modelo", v)} placeholder="Ex: Sprinter 415" />
+                {errors.modelo && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-tight">{errors.modelo}</p>}
+              </Field>
+              <Field label="Marca *" col="md:col-span-1">
+                <Select value={form.marca} onChange={v => upd("marca", v)} options={MARCAS} />
+                {errors.marca && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-tight">{errors.marca}</p>}
+              </Field>
+              <Field label="Ano *" col="md:col-span-1">
+                <Input value={form.ano} onChange={v => upd("ano", maskAno(v))} placeholder="2024" />
+                {errors.ano && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-tight">{errors.ano}</p>}
+              </Field>
+              <Field label="Chassi" col="md:col-span-2">
+                <Input value={form.chassi} onChange={v => upd("chassi", v.toUpperCase().slice(0,17))} placeholder="17 caracteres" />
+              </Field>
+              <Field label="Renavam" col="md:col-span-2">
+                <Input value={form.renavam} onChange={v => upd("renavam", maskRenavam(v))} placeholder="Número do Renavam" />
+              </Field>
+              <Field label="Cor">
+                <Select value={form.cor} onChange={v => upd("cor", v)} options={CORES} />
+              </Field>
+              <Field label="Capacidade Passoageiros *">
+                <Input type="number" value={form.quantidadeMaximaPassageiros}
+                  onChange={v => upd("quantidadeMaximaPassageiros", v)} placeholder="15" />
+                {errors.qtd && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-tight">{errors.qtd}</p>}
+              </Field>
+              <Field label="Val. Veículo (R$)">
+                <MoneyInput value={form.valorVeiculo} onChange={v => upd("valorVeiculo", v)} />
+              </Field>
+              <Field label="Seguro Anual (R$)">
+                <MoneyInput value={form.valorSeguro} onChange={v => upd("valorSeguro", v)} />
+              </Field>
+            </div>
 
-          {/* Ficha Técnica */}
-          <Section title="Ficha Técnica" icon={<BarChart2 size={14} />} cols={2}>
-            <Field label="Média KM Rodado por Mês">
-              <Input type="number" value={form.mediaKmRodadoMes}
-                onChange={v => upd("mediaKmRodadoMes", v)} placeholder="5000" />
-            </Field>
-            <Field label="Combustível (KM por litro)">
-              <Input type="number" value={form.combustivelPorLitro}
-                onChange={v => upd("combustivelPorLitro", v)} placeholder="12" />
-            </Field>
-            <Field label="Revisão a cada 20.000 km (R$)">
-              <MoneyInput value={form.revisaoVeiculo} onChange={v => upd("revisaoVeiculo", v)} />
-            </Field>
-            <Field label="Pneus a cada 60.000 km (R$)">
-              <MoneyInput value={form.pneusVeiculo} onChange={v => upd("pneusVeiculo", v)} />
-            </Field>
-            <Field label="Manutenção a cada 20.000 km (R$)">
-              <MoneyInput value={form.manutencaoVeiculo} onChange={v => upd("manutencaoVeiculo", v)} />
-            </Field>
-            <Field label="Valor Lavagem (R$)">
-              <MoneyInput value={form.lavagem} onChange={v => upd("lavagem", v)} />
-            </Field>
-            <Field label="Alinhamento por troca de pneu (R$)">
-              <MoneyInput value={form.alinhamentoPneu} onChange={v => upd("alinhamentoPneu", v)} />
-            </Field>
-            <Field label="Balanceamento (R$)">
-              <MoneyInput value={form.balanceamento} onChange={v => upd("balanceamento", v)} />
-            </Field>
-          </Section>
+            {/* Terceirizado */}
+            <div className="mt-10 py-6 border-t border-surface-border dark:border-surface-dark-border">
+              <label className="flex items-center gap-4 cursor-pointer group">
+                <div onClick={() => upd("terceirizado", !form.terceirizado)}
+                  className={`w-14 h-8 rounded-full transition-all relative p-1 ${form.terceirizado ? "bg-brand-500 shadow-lg shadow-brand-500/30" : "bg-steel-200 dark:bg-steel-800"}`}>
+                  <div className={`w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${form.terceirizado ? "translate-x-6" : "translate-x-0"}`} />
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-brand-900 dark:text-white block">Veículo Terceirizado</span>
+                  <p className="text-[10px] text-steel-500 dark:text-steel-400 uppercase tracking-widest mt-0.5">Selecione se o parceiro for o dono do veículo</p>
+                </div>
+              </label>
+            </div>
 
-          {/* Ações */}
-          <div className="flex gap-3 mt-8 pt-6 border-t border-dark-50">
-            <button onClick={handleSave} disabled={saving} className="btn-primary px-8 disabled:opacity-50">
-              {saving ? "Salvando..." : <><CheckCircle size={16} /> Cadastrar Veículo</>}
-            </button>
-            <button onClick={() => { setForm(EMPTY_FORM); setErrors({}); }} className="btn-outline">
-              Limpar campos
-            </button>
+            {form.terceirizado && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                className="mt-4 p-6 bg-yellow-500/5 dark:bg-yellow-500/10 border border-yellow-500/20 rounded-2xl">
+                <p className="text-[10px] text-yellow-600 dark:text-yellow-500 font-bold uppercase tracking-[0.2em] mb-4">Dados do Proprietário Parceiro</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Field label="CPF / CNPJ">
+                    <Input value={form.cpfCnpj} onChange={v => upd("cpfCnpj", v)} placeholder="Documento do titular" />
+                  </Field>
+                  <Field label="Nome / Razão Social">
+                    <Input value={form.proprietario} onChange={v => upd("proprietario", v)} placeholder="Proprietário legal" />
+                  </Field>
+                  <Field label="Telefone de Contato">
+                    <Input value={form.telefone} onChange={v => upd("telefone", maskPhone(v))} placeholder="(00) 0 0000-0000" />
+                  </Field>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Vistorias */}
+            <Section title="Vistorias e Taxas Agerba" icon={<Shield size={16} />} cols={2}>
+              <Field label="Taxa de Vistoria (R$)">
+                <MoneyInput value={form.valorVistoria} onChange={v => upd("valorVistoria", v)} />
+              </Field>
+              <Field label="Licenciamento Anual (R$)">
+                <MoneyInput value={form.valorLicenciamento} onChange={v => upd("valorLicenciamento", v)} />
+              </Field>
+              <Field label="GTX Vistoria (R$)">
+                <MoneyInput value={form.gtxVistoria} onChange={v => upd("gtxVistoria", v)} />
+              </Field>
+              <Field label="Taxa Renovação Simpl. (R$)">
+                <MoneyInput value={form.renovacaoSimplificada} onChange={v => upd("renovacaoSimplificada", v)} />
+              </Field>
+            </Section>
+
+            {/* Ficha Técnica */}
+            <Section title="Manutenção e Desempenho" icon={<BarChart2 size={16} />} cols={2}>
+              <Field label="Média rodada (km/mês)">
+                <Input type="number" value={form.mediaKmRodadoMes}
+                  onChange={v => upd("mediaKmRodadoMes", v)} placeholder="Ex: 8000" />
+              </Field>
+              <Field label="Consumo médio (km/l)">
+                <Input type="number" value={form.combustivelPorLitro}
+                  onChange={v => upd("combustivelPorLitro", v)} placeholder="Ex: 10" />
+              </Field>
+              <Field label="Custo Revisão 20k km (R$)">
+                <MoneyInput value={form.revisaoVeiculo} onChange={v => upd("revisaoVeiculo", v)} />
+              </Field>
+              <Field label="Custo Pneus 60k km (R$)">
+                <MoneyInput value={form.pneusVeiculo} onChange={v => upd("pneusVeiculo", v)} />
+              </Field>
+              <Field label="Manutenção Corretiva Est. (R$)">
+                <MoneyInput value={form.manutencaoVeiculo} onChange={v => upd("manutencaoVeiculo", v)} />
+              </Field>
+              <Field label="Custo Médio Lavagem (R$)">
+                <MoneyInput value={form.lavagem} onChange={v => upd("lavagem", v)} />
+              </Field>
+              <Field label="Alinhamento/Balanceamento (R$)">
+                <MoneyInput value={form.alinhamentoPneu} onChange={v => upd("alinhamentoPneu", v)} />
+              </Field>
+            </Section>
+
+            {/* Ações */}
+            <div className="flex gap-4 mt-12 pt-8 border-t border-surface-border dark:border-surface-dark-border">
+              <button onClick={handleSave} disabled={saving} className="btn-primary py-4 px-10 text-xs font-bold uppercase tracking-widest flex items-center gap-3">
+                {saving ? "Processando..." : <><CheckCircle size={18} /> Salvar Veículo</>}
+              </button>
+              <button onClick={() => { if(confirm("Limpar formulário?")) { setForm(EMPTY_FORM); setErrors({}); } }} className="btn-outline py-4 px-8 text-xs font-bold uppercase tracking-widest">
+                Limpar Campos
+              </button>
+            </div>
           </div>
         </div>
       )}
