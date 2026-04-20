@@ -60,11 +60,11 @@ export default function AdminSidebar({
         initial={false}
         animate={{ x: mobileOpen ? 0 : undefined }}
         className={`
-          fixed inset-y-0 left-0 z-50 w-72 flex flex-col
+          fixed inset-y-0 left-0 z-[60] w-72 flex flex-col
           bg-white dark:bg-surface-dark-elevated
           border-r border-surface-border dark:border-surface-dark-border
-          transition-[width,transform] duration-500 ease-out
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          transition-all duration-500 ease-in-out
+          ${mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
           lg:translate-x-0 ${width}
         `}
       >
@@ -95,13 +95,13 @@ export default function AdminSidebar({
             </AnimatePresence>
           </Link>
 
-          {/* botão fechar mobile */}
+          {/* Botão fechar mobile - mais visível e fácil de tocar */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-2 rounded-lg text-steel-500 hover:bg-brand-500/10"
+            className="lg:hidden p-2.5 rounded-xl text-steel-500 hover:bg-brand-500/10 active:scale-95 transition-all"
             aria-label="Fechar menu"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 

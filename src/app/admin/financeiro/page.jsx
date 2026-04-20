@@ -170,7 +170,7 @@ function SecaoMes({ tipo, lancamentos, loading, onAbrirModal, onRecarregar }) {
             </PieChart>
           </ResponsiveContainer>
 
-          <div className="w-full grid grid-cols-2 gap-x-6 gap-y-3 mt-4">
+          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 mt-4">
             {dadosPie.map((d, idx) => (
               <div key={d.name} className="flex items-center gap-2 min-w-0">
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: CORES[idx % CORES.length] }} />
@@ -180,7 +180,7 @@ function SecaoMes({ tipo, lancamentos, loading, onAbrirModal, onRecarregar }) {
             ))}
           </div>
 
-          <div className="w-full mt-6 pt-4 border-t border-surface-border dark:border-surface-dark-border grid grid-cols-2 gap-4 text-[10px] font-black uppercase tracking-widest">
+          <div className="w-full mt-6 pt-4 border-t border-surface-border dark:border-surface-dark-border grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px] font-black uppercase tracking-widest">
             <div className="flex justify-between">
               <span className="text-steel-400">Quitado</span>
               <span style={{ color: accentColor }}>{fmt(totalQuitado)}</span>
@@ -309,15 +309,15 @@ export default function AdminFinanceiroPage() {
       </div>
 
       <>
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
           {[
             { label:"Saldo Atual", value:fmt(d?.saldo_atual),    icon:DollarSign,    color:"#470002", bg:"rgba(71,0,2,0.1)" },
             { label:"A Receber",   value:fmt(d?.a_receber_mes),  icon:TrendingUp,    color:"#10b981", bg:"rgba(16,185,129,0.1)"   },
             { label:"A Pagar",     value:fmt(d?.a_pagar_mes),    icon:TrendingDown,  color:"#ef4444", bg:"rgba(239,68,68,0.1)"   },
             { label:"Vencidos",    value:d?.vencidos_pagar||0,   icon:AlertTriangle, color:"#f59e0b", bg:"rgba(245,158,11,0.1)", suffix:" conta(s)" },
           ].map(c => (
-            <div key={c.label} className="glass-card rounded-3xl p-6 flex items-start gap-4 shadow-sm border-surface-border dark:border-surface-dark-border">
+            <div key={c.label} className="glass-card rounded-3xl p-5 md:p-6 flex items-start gap-4 shadow-sm border-surface-border dark:border-surface-dark-border">
               <div style={{ width:48, height:48, borderRadius:16, background:c.bg, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
                 <c.icon size={20} style={{ color:c.color }} />
               </div>
@@ -368,7 +368,7 @@ export default function AdminFinanceiroPage() {
                 <h3 className="text-xs font-black text-brand-900 dark:text-white uppercase tracking-widest">{card.titulo}</h3>
                 <span className="text-[10px] text-steel-500 capitalize font-bold">{card.sub}</span>
               </div>
-              <div className="flex gap-8">
+              <div className="flex flex-wrap gap-4 md:gap-8">
                 {card.itens.map(it => (
                   <div key={it.l}>
                     <p className="text-[10px] font-bold text-steel-400 uppercase tracking-widest mb-1">{it.l}</p>

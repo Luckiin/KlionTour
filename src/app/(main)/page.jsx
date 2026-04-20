@@ -44,23 +44,29 @@ export const metadata = { title: "Início" };
 export default function HomePage() {
   return (
     <>
-      {/* =============== HERO CINEMATOGRÁFICO =============== */}
-      <section id="hero" className="relative min-h-[92vh] flex items-center w-full overflow-hidden -mt-20 pt-20">
+      {/* =============== HERO ABSTRATO PREMIUM =============== */}
+      <section id="hero" className="relative min-h-[95vh] flex items-center justify-center w-full -mt-20 pt-20 overflow-visible">
         {/* Background layers */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          {/* Imagem de fundo com ken-burns */}
-          <div className="absolute inset-0 bg-[url('/hero-bg.png')] bg-cover bg-center animate-ken-burns" />
-          {/* Gradiente azul sobreposto */}
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-900/85 via-brand-900/70 to-brand-500/40" />
-          {/* Glow radial */}
-          <div className="absolute inset-0 bg-hero-glow opacity-80" />
-          {/* Vinheta inferior */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-surface dark:from-surface-dark to-transparent" />
-          {/* Grid sutil */}
-          <div className="absolute inset-0 bg-grid-dark bg-[size:60px_60px] opacity-20" />
+        <div className="absolute inset-0 z-0 overflow-hidden bg-[#02040a]">
+          {/* Mesh Gradients Dinâmicos Profundos */}
+          <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-brand-900/40 blur-[140px] rounded-full animate-pulse-slow" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-500/20 blur-[120px] rounded-full" />
+          <div className="absolute top-[30%] left-[20%] w-[40%] h-[40%] bg-brand-400/15 blur-[100px] rounded-full animate-bounce-slow" />
+          
+          {/* Brilho central para evitar o "vazio" */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(70,117,192,0.1),transparent_70%)]" />
+          
+          {/* Textura de ruído / grão sutil */}
+          <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+          
+          {/* Overlay de gradiente linear para profundidade */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/80 via-transparent to-[#050810]" />
+          
+          {/* Grid de luxo sutil */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]" />
         </div>
 
-        <div className="container-x relative z-10 w-full pt-10 pb-40 md:pb-52">
+        <div className="container-x relative z-10 w-full flex flex-col items-center text-center pt-20 pb-48">
           <Reveal direction="fade" duration={0.8}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs tracking-[0.22em] uppercase font-medium text-white bg-white/10 border border-white/20 backdrop-blur-md mb-8">
               <Sparkles size={13} className="text-brand-300" />
@@ -92,12 +98,12 @@ export default function HomePage() {
             </Reveal>
 
             <Reveal direction="up" delay={1.3} duration={0.7}>
-              <div className="mt-10 flex flex-wrap items-center gap-4">
-                <Link href="#simular" className="btn-primary text-base px-7 py-3.5 shadow-glow-blue">
+              <div className="mt-12 flex flex-wrap items-center justify-center gap-6">
+                <Link href="#simular" className="btn-primary text-base px-10 py-4 shadow-glow-blue scale-110">
                   Simular viagem <ArrowRight size={18} />
                 </Link>
-                <Link href="/sobre" className="group inline-flex items-center gap-3 text-white/90 hover:text-white text-sm font-medium">
-                  <span className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center group-hover:bg-white group-hover:text-brand-900 transition">
+                <Link href="/sobre" className="group inline-flex items-center gap-3 text-white/70 hover:text-white text-sm font-medium transition-colors">
+                  <span className="w-11 h-11 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-brand-900 transition-all duration-500">
                     <ArrowRight size={14} />
                   </span>
                   Conhecer a Klion
@@ -107,7 +113,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Simulador flutuante sobre o hero */}
+        {/* Simulador flutuante - Corrigido para não ser cortado */}
         <div id="simular" className="absolute inset-x-0 bottom-0 translate-y-1/2 container-x z-20">
           <Reveal direction="up" delay={0.6} duration={0.9}>
             <SimulationHeroForm />
@@ -115,8 +121,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Espaço para acomodar o simulador flutuante */}
-      <div className="h-40 md:h-56" />
+      {/* Espaço maior para acomodar o simulador e evitar o "vazio escuro" */}
+      <div className="h-64 md:h-80" />
 
       {/* =============== STATS =============== */}
       <section className="container-x py-20 md:py-28">

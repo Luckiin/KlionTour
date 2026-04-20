@@ -85,7 +85,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-10">
       {/* ====================== KPIs ====================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
         {KPI.map((k, i) => {
           const Icon = k.icon;
           return (
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
                     <p className="text-xs tracking-[0.2em] uppercase text-steel-500 dark:text-steel-400">
                       {k.label}
                     </p>
-                    <div className={`font-serif text-4xl md:text-5xl font-light tracking-tightest mt-3 ${
+                    <div className={`font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tightest mt-3 ${
                       k.negative ? "text-rose-500" : "text-brand-900 dark:text-white"
                     }`}>
                       {k.isMoney ? (
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="font-serif text-lg text-brand-900 dark:text-white">
+                        <div className="font-serif text-base md:text-lg text-brand-900 dark:text-white">
                           {q.total_price ? fmt(q.total_price) : "—"}
                         </div>
                       </div>

@@ -66,8 +66,8 @@ export default function AdminLayout({ children }) {
 
       <div className={`transition-all duration-500 ${contentOffset}`}>
         {/* Topbar sticky */}
-        <header className="sticky top-0 z-30 backdrop-blur-xl bg-surface/75 dark:bg-surface-dark/75 border-b border-surface-border dark:border-surface-dark-border">
-          <div className="h-20 px-5 md:px-8 flex items-center gap-4">
+        <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/75 dark:bg-surface-dark/75 border-b border-surface-border dark:border-surface-dark-border">
+          <div className="h-16 md:h-20 px-4 sm:px-6 md:px-8 flex items-center gap-4">
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden p-2 rounded-xl border border-surface-border dark:border-surface-dark-border text-brand-900 dark:text-white hover:bg-brand-500/10 transition"
@@ -111,7 +111,7 @@ export default function AdminLayout({ children }) {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="px-5 md:px-8 py-8 md:py-10"
+          className="px-4 sm:px-6 md:px-8 py-6 md:py-10"
         >
           {children}
         </motion.main>

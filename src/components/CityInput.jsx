@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 
-export default function CityInput({ label, value, onChange, onCoordinateSelect, placeholder, id }) {
+export default function CityInput({ label, value, onChange, onCoordinateSelect, placeholder, id, inputClassName, labelClassName }) {
   const [open, setOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function CityInput({ label, value, onChange, onCoordinateSelect, 
 
   return (
     <div className="relative" ref={ref}>
-      {label && <label htmlFor={id} className="block text-sm font-medium text-brand-900 dark:text-white mb-1.5">{label}</label>}
+      {label && <label htmlFor={id} className={labelClassName || "block text-sm font-medium text-brand-900 dark:text-white mb-1.5"}>{label}</label>}
       <div className="relative">
         <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-steel-500 pointer-events-none" />
         <input
@@ -66,7 +66,7 @@ export default function CityInput({ label, value, onChange, onCoordinateSelect, 
           value={value}
           onChange={e => handleChange(e.target.value)}
           onFocus={() => setOpen(true)}
-          className="input-field input-icon w-full pr-10"
+          className={inputClassName || "input-field input-icon w-full pr-10"}
           placeholder={placeholder || "Digite o local..."}
           autoComplete="off"
         />

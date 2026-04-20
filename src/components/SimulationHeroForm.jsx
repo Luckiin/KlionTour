@@ -186,9 +186,15 @@ export default function SimulationHeroForm() {
     { id: "in", label: "Transfer In" },
     { id: "out", label: "Transfer Out" },
   ];
+  const inputStyle = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 outline-none transition placeholder:text-white/30";
+  const labelStyle = "block text-[10px] tracking-widest uppercase font-bold text-brand-500 mb-1.5 ml-1";
 
   return (
-    <div className="glass p-6 md:p-8 rounded-3xl shadow-soft-lg w-full max-w-7xl mx-auto">
+    <div className="relative group/form">
+      {/* Glow de fundo sutil */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 to-brand-900/20 rounded-[2rem] blur-2xl opacity-0 group-hover/form:opacity-100 transition duration-1000"></div>
+      
+      <div className="relative bg-[#0c1220]/60 backdrop-blur-3xl p-6 md:p-10 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-7xl mx-auto">
       {/* Radio Tabs */}
       <div className="flex flex-wrap items-center gap-2 mb-6">
         {tabs.map(t => (
@@ -196,9 +202,9 @@ export default function SimulationHeroForm() {
             key={t.id}
             type="button"
             onClick={() => setTipo(t.id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${tipo === t.id
-              ? "bg-brand-500 text-white shadow-soft"
-              : "bg-brand-500/5 text-brand-900 dark:text-white/80 hover:bg-brand-500/15"
+            className={`px-5 py-2 rounded-full text-xs tracking-widest uppercase font-semibold transition-all duration-300 ${tipo === t.id
+              ? "bg-brand-500 text-white shadow-[0_0_20px_rgba(36,204,78,0.3)] scale-105"
+              : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
               }`}
           >
             {t.label}
@@ -207,61 +213,66 @@ export default function SimulationHeroForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="flex flex-col md:flex-row items-start gap-4">
+        <div className="flex flex-col lg:flex-row items-end gap-5">
           <div className="flex-1 w-full text-left">
             <CityInput
               id="hero-from"
               label="Origem"
+              labelClassName={labelStyle}
+              inputClassName={inputStyle + " pl-10"}
               value={form.from}
               onChange={v => update("from", v)}
               onCoordinateSelect={c => { update("fromLat", c.lat); update("fromLon", c.lon); }}
-              placeholder="De onde?"
+              placeholder="Saindo de onde?"
             />
           </div>
           <div className="flex-1 w-full text-left">
             <CityInput
               id="hero-to"
               label="Destino"
+              labelClassName={labelStyle}
+              inputClassName={inputStyle + " pl-10"}
               value={form.to}
               onChange={v => update("to", v)}
               onCoordinateSelect={c => { update("toLat", c.lat); update("toLon", c.lon); }}
-              placeholder="Para onde?"
+              placeholder="Para onde vamos?"
             />
           </div>
 
-          <div className="w-full md:w-36 text-left">
-            <label className="block text-sm font-medium text-brand-900 dark:text-white mb-1">Ida</label>
+          <div className="w-full md:w-40 text-left">
+            <label className={labelStyle}>Data Ida</label>
             <input type="date" value={form.date} onChange={e => update("date", e.target.value)}
               min={new Date().toISOString().split("T")[0]}
-              className="input-field w-full px-2" required />
+              className={inputStyle + " px-3"} required />
           </div>
 
           {tipo === "ida_volta" && (
-            <div className="w-full md:w-36 text-left shrink-0">
-              <label className="block text-sm font-medium text-brand-900 dark:text-white mb-1">Volta</label>
+            <div className="w-full md:w-40 text-left shrink-0">
+              <label className={labelStyle}>Data Volta</label>
               <input type="date" value={form.returnDate} onChange={e => update("returnDate", e.target.value)}
                 min={form.date || new Date().toISOString().split("T")[0]}
-                className="input-field w-full px-2" required={tipo === "ida_volta"} />
+                className={inputStyle + " px-3"} required={tipo === "ida_volta"} />
             </div>
           )}
 
           <div className="w-full md:w-32 relative text-left">
-            <label className="block text-sm font-medium text-brand-900 dark:text-white mb-1">Qtd Passageiros</label>
+            <label className={labelStyle}>Passageiros</label>
             <div className="relative">
-              <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-steel-500" />
+              <Users size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-steel-400" />
               <input type="number" min="1" max="15" value={form.passengers}
                 onChange={e => update("passengers", e.target.value)}
-                className="input-field w-full pl-9 pr-2" placeholder="Qtd." required />
+                className={inputStyle + " pl-10"} placeholder="Qtd" required />
             </div>
           </div>
 
-          <div className="w-full md:w-auto mt-6">
-            <button type="submit" className="btn-primary py-2.5 px-6 whitespace-nowrap h-[42px] flex items-center justify-center gap-2 w-full">
-              <Search size={18} /> Gerar Cotação
+          <div className="w-full lg:w-auto">
+            <button type="submit" className="btn-primary py-4 px-8 whitespace-nowrap h-[54px] flex items-center justify-center gap-2 w-full text-xs font-bold tracking-widest uppercase">
+              <Search size={18} /> Simular
             </button>
           </div>
         </div>
       </form>
+      </div>
     </div>
   );
 }
