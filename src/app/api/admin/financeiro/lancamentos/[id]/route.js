@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase-server";
 export async function PUT(request, { params }) {
   try {
     const supabase = await createClient();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
     const { id }    = params;
     const payload   = await request.json();
 
@@ -24,6 +28,10 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const supabase = await createClient();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
     const { id }    = params;
 
     const { error } = await supabase

@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase-server";
 export async function GET(request) {
   try {
     const supabase = await createClient();
+    
+    // Verificação de autenticação
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const tipo    = searchParams.get("tipo");
     const status  = searchParams.get("status");
@@ -36,15 +41,22 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const supabase = await createClient();
+    
+    // Verificação de autenticação
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
     const payload = await request.json();
     
-    // Se for um recebimento vinculado a uma cotação e tiver conta_id, 
-    // podemos atualizar o saldo da conta se o status for 'pago'.
-    // Mas para simplificar seguiremos a lógica do prevgestao e depois refinamos se precisar.
+    // Injeta o cliente_id do usuário logado para satisfazer RLS
+    const finalPayload = {
+      ...payload,
+      cliente_id: user.id
+    };
 
     const { data, error } = await supabase
       .from("lancamentos")
-      .insert(payload)
+      .insert(finalPayload)
       .select("*, categorias_financeiras(id,nome,cor), contas(id,nome)")
       .single();
       

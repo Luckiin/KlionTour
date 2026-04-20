@@ -46,14 +46,33 @@ export default function ModalLancamento({ tipo = "receita", original = null, onC
     }
   }, [original, tipo]);
 
+  // Autoseleção se houver apenas uma opção
+  useEffect(() => {
+    if (!original && categorias.length === 1 && !formData.categoria_id) {
+      setFormData(prev => ({ ...prev, categoria_id: categorias[0].id }));
+    }
+    if (!original && contas.length === 1 && !formData.conta_id) {
+      setFormData(prev => ({ ...prev, conta_id: contas[0].id }));
+    }
+  }, [categorias, contas, original]);
+
   async function handleSubmit(e) {
     if (e) e.preventDefault();
+    
+    // Validação básica
+    if (!formData.descricao || !formData.valor || !formData.categoria_id) {
+      return toast.error("Preencha todos os campos obrigatórios (Descrição, Valor e Categoria)");
+    }
+
     setLoading(true);
 
     const payload = {
       ...formData,
       valor: Number(String(formData.valor).replace(/\D/g, "")) / 100,
       valor_pago: formData.valor_pago ? Number(String(formData.valor_pago).replace(/\D/g, "")) / 100 : null,
+      // Converte string vazia em NULL para evitar erro de UUID no Postgres
+      categoria_id: formData.categoria_id || null,
+      conta_id: formData.conta_id || null,
     };
 
     try {
@@ -64,12 +83,15 @@ export default function ModalLancamento({ tipo = "receita", original = null, onC
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error();
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.error || "Erro ao salvar");
+      
       toast.success(original ? "Lançamento atualizado!" : "Lançamento criado com sucesso!");
       onSalvo?.();
       onClose();
     } catch (err) {
-      toast.error("Erro ao salvar lançamento.");
+      toast.error(err.message || "Erro ao salvar lançamento.");
     } finally {
       setLoading(false);
     }
