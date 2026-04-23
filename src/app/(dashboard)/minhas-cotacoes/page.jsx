@@ -165,8 +165,11 @@ export default function MinhasCotacoesPage() {
                  <div className="card glass p-5 flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500"><Calendar size={20} /></div>
                     <div>
-                      <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest">Data</p>
-                      <p className="text-sm font-bold text-brand-900 dark:text-white">{new Date(selected.date + "T12:00:00").toLocaleDateString("pt-BR")}</p>
+                      <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest">Datas</p>
+                      <p className="text-sm font-bold text-brand-900 dark:text-white">
+                        {new Date(selected.date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })}
+                        {selected.return_date && ` - ${new Date(selected.return_date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit' })}`}
+                      </p>
                     </div>
                  </div>
                  <div className="card glass p-5 flex items-center gap-4">
@@ -317,6 +320,7 @@ function QuoteListItem({ quote, active, onClick, index }) {
         </div>
         <div className="text-[10px] font-bold text-steel-400">
           {new Date(quote.date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: 'short' })}
+          {quote.return_date && ` - ${new Date(quote.return_date + "T12:00:00").toLocaleDateString("pt-BR", { day: '2-digit', month: 'short' })}`}
         </div>
       </div>
       

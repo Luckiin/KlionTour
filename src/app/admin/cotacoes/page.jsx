@@ -139,7 +139,9 @@ export default function AdminCotacoesPage() {
                           {q.from_city} <ChevronRight size={10} /> {q.to_city}
                         </p>
                         <p className="text-[10px] font-medium text-steel-500 dark:text-steel-400">
-                          {new Date(q.date + "T12:00:00").toLocaleDateString("pt-BR")} · {q.passengers} pax
+                          {new Date(q.date + "T12:00:00").toLocaleDateString("pt-BR")}
+                          {q.return_date && ` - ${new Date(q.return_date + "T12:00:00").toLocaleDateString("pt-BR")}`}
+                          {` · ${q.passengers} pax`}
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -209,7 +211,7 @@ export default function AdminCotacoesPage() {
                   </div>
 
                   {/* Fluxo de Negociação */}
-                  {["pending", "negotiating", "proposed"].includes(selected.status) && (
+                  {["pending", "negotiating"].includes(selected.status) && (
                     <div className="space-y-6 pt-4 border-t border-surface-border dark:border-surface-dark-border">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
@@ -260,6 +262,14 @@ export default function AdminCotacoesPage() {
                           </button>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {selected.status === "proposed" && (
+                    <div className="p-6 rounded-3xl bg-blue-500/5 border border-blue-500/20 text-center">
+                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                         Proposta enviada! Aguardando resposta do cliente...
+                       </p>
                     </div>
                   )}
 

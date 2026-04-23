@@ -167,7 +167,7 @@ create table if not exists public.quotes (
 
   -- Status
   status          text not null default 'pending'
-                  check (status in ('pending','approved','rejected','paid','done','cancelled')),
+                  check (status in ('pending','proposed','negotiating','approved','rejected','paid','done','cancelled')),
 
   -- Notas
   notes           text,
