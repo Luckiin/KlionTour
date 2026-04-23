@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Users, CheckCircle, Shield, Loader2, Send, MapPin, Calendar, ArrowRight } from "lucide-react";
+import { Users, CheckCircle, Shield, Loader2, MapPin, Calendar, ArrowRight } from "lucide-react";
 import CityInput from "@/components/CityInput";
 import { useAuth } from "@/context/AuthContext";
 import { createQuote } from "@/lib/services/quotes";
+import { calculateTransportQuote } from "@/lib/transportQuote";
+import { getAppSettings } from "@/lib/services/appSettings";
 import Reveal from "@/components/motion/Reveal";
 
 export default function CotacaoDashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
 
   const [tipo, setTipo] = useState("ida_volta");
+  const [gasPricePerKm, setGasPricePerKm] = useState(null);
   const [form, setForm] = useState({
     from: "", to: "", fromLat: "", fromLon: "", toLat: "", toLon: "",
     date: "", returnDate: "", passengers: "", notes: ""
@@ -23,6 +24,20 @@ export default function CotacaoDashboardPage() {
   const [loading, setLoading] = useState(false);
 
   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    let active = true;
+
+    getAppSettings()
+      .then((settings) => {
+        if (active) setGasPricePerKm(settings.gas_price_per_km);
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (submitted) {
     return (
@@ -39,8 +54,11 @@ export default function CotacaoDashboardPage() {
             <Link href="/painel" className="btn-primary px-8 py-4 text-xs tracking-widest uppercase">
               Ver Meu Painel
             </Link>
-            <button 
-              onClick={() => { setSubmitted(false); setForm({ from: "", to: "", fromLat: "", fromLon: "", toLat: "", toLon: "", date: "", returnDate: "", passengers: "", notes: "" }); }}
+            <button
+              onClick={() => {
+                setSubmitted(false);
+                setForm({ from: "", to: "", fromLat: "", fromLon: "", toLat: "", toLon: "", date: "", returnDate: "", passengers: "", notes: "" });
+              }}
               className="text-xs font-bold text-brand-500 uppercase tracking-widest hover:underline"
             >
               Nova Viagem
@@ -61,25 +79,23 @@ export default function CotacaoDashboardPage() {
     setLoading(true);
 
     try {
-      // Cálculo de distância (simplificado para o exemplo, mantendo o original)
       let distancia = 300;
       if (form.fromLat && form.fromLon && form.toLat && form.toLon) {
         const R = 6371;
-        const lat1 = parseFloat(form.fromLat); const lon1 = parseFloat(form.fromLon);
-        const lat2 = parseFloat(form.toLat); const lon2 = parseFloat(form.toLon);
+        const lat1 = parseFloat(form.fromLat);
+        const lon1 = parseFloat(form.fromLon);
+        const lat2 = parseFloat(form.toLat);
+        const lon2 = parseFloat(form.toLon);
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         distancia = (R * c) * 1.3;
       }
 
-      let basePrice = 0;
-      if (tipo === "ida_volta") {
-        basePrice = Math.max(1000, distancia * 2 * 5);
-      } else {
-        basePrice = distancia * 7.50;
-      }
+      const { chargedDistance, price: basePrice } = calculateTransportQuote(distancia, tipo, gasPricePerKm ?? undefined);
 
       await createQuote({
         user_id: user.id,
@@ -92,7 +108,7 @@ export default function CotacaoDashboardPage() {
         from_lon: form.fromLon ? parseFloat(form.fromLon) : null,
         to_lat: form.toLat ? parseFloat(form.toLat) : null,
         to_lon: form.toLon ? parseFloat(form.toLon) : null,
-        distance_km: parseFloat(distancia.toFixed(2)),
+        distance_km: parseFloat(chargedDistance.toFixed(2)),
         date: form.date,
         return_date: tipo === "ida_volta" ? form.returnDate : null,
         trip_type: tipo,
@@ -112,6 +128,7 @@ export default function CotacaoDashboardPage() {
 
   const tabs = [
     { id: "ida_volta", label: "Ida e volta" },
+    { id: "ida", label: "Somente ida", disabled: true },
     { id: "in", label: "Transfer In" },
     { id: "out", label: "Transfer Out" },
   ];
@@ -137,18 +154,21 @@ export default function CotacaoDashboardPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="relative z-10 space-y-10">
-          {/* Tabs */}
           <div className="bg-surface-subtle dark:bg-surface-dark-subtle/50 p-1.5 rounded-2xl inline-flex flex-wrap gap-1 border border-surface-border dark:border-surface-dark-border">
             {tabs.map(t => (
               <button
                 key={t.id}
                 type="button"
-                onClick={() => setTipo(t.id)}
+                onClick={() => !t.disabled && setTipo(t.id)}
+                disabled={t.disabled}
                 className={`px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
                   tipo === t.id
                     ? "bg-white dark:bg-surface-dark shadow-md text-brand-500 border border-brand-500/10"
-                    : "text-steel-500 hover:text-brand-900 dark:hover:text-white"
+                    : t.disabled
+                      ? "text-steel-300 cursor-not-allowed"
+                      : "text-steel-500 hover:text-brand-900 dark:hover:text-white"
                 }`}
+                title={t.disabled ? "Opção temporariamente desabilitada" : undefined}
               >
                 {t.label}
               </button>
@@ -158,15 +178,23 @@ export default function CotacaoDashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
                <label className="text-[10px] font-bold uppercase tracking-widest text-steel-400 px-1">Ponto de Partida</label>
-               <CityInput id="cot-from" value={form.from}
-                 onChange={v => update("from", v)} onCoordinateSelect={c => { update("fromLat", c.lat); update("fromLon", c.lon); }}
-                 placeholder="Cidade ou endereço exato..." />
+               <CityInput
+                 id="cot-from"
+                 value={form.from}
+                 onChange={v => update("from", v)}
+                 onCoordinateSelect={c => { update("fromLat", c.lat); update("fromLon", c.lon); }}
+                 placeholder="Cidade ou endereço exato..."
+               />
             </div>
             <div className="space-y-2">
                <label className="text-[10px] font-bold uppercase tracking-widest text-steel-400 px-1">Destino Final</label>
-               <CityInput id="cot-to" value={form.to}
-                 onChange={v => update("to", v)} onCoordinateSelect={c => { update("toLat", c.lat); update("toLon", c.lon); }}
-                 placeholder="Qual o local de desembarque?" />
+               <CityInput
+                 id="cot-to"
+                 value={form.to}
+                 onChange={v => update("to", v)}
+                 onCoordinateSelect={c => { update("toLat", c.lat); update("toLon", c.lon); }}
+                 placeholder="Qual o local de desembarque?"
+               />
             </div>
           </div>
 
@@ -175,8 +203,14 @@ export default function CotacaoDashboardPage() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-steel-400 px-1">Data da Viagem</label>
               <div className="relative">
                 <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-500" />
-                <input type="date" value={form.date} onChange={e => update("date", e.target.value)}
-                  min={new Date().toISOString().split("T")[0]} className="input-field pl-12 bg-white dark:bg-surface-dark-elevated shadow-inner" required />
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={e => update("date", e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="input-field pl-12 bg-white dark:bg-surface-dark-elevated shadow-inner"
+                  required
+                />
               </div>
             </div>
 
@@ -185,8 +219,14 @@ export default function CotacaoDashboardPage() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-steel-400 px-1">Retorno</label>
                 <div className="relative">
                    <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-500" />
-                   <input type="date" value={form.returnDate} onChange={e => update("returnDate", e.target.value)}
-                    min={form.date || new Date().toISOString().split("T")[0]} className="input-field pl-12 bg-white dark:bg-surface-dark-elevated shadow-inner" required={tipo === "ida_volta"} />
+                   <input
+                    type="date"
+                    value={form.returnDate}
+                    onChange={e => update("returnDate", e.target.value)}
+                    min={form.date || new Date().toISOString().split("T")[0]}
+                    className="input-field pl-12 bg-white dark:bg-surface-dark-elevated shadow-inner"
+                    required={tipo === "ida_volta"}
+                  />
                 </div>
               </div>
             )}
@@ -195,17 +235,29 @@ export default function CotacaoDashboardPage() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-steel-400 px-1">Passageiros</label>
               <div className="relative">
                 <Users size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-500" />
-                <input type="number" min="1" max="15" value={form.passengers}
+                <input
+                  type="number"
+                  min="1"
+                  max="15"
+                  value={form.passengers}
                   onChange={e => update("passengers", e.target.value)}
-                  className="input-field pl-12 bg-white dark:bg-surface-dark-elevated shadow-inner" placeholder="Pessoas" required />
+                  className="input-field pl-12 bg-white dark:bg-surface-dark-elevated shadow-inner"
+                  placeholder="Pessoas"
+                  required
+                />
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-steel-400 px-1">Necessidades Especiais (Opcional)</label>
-            <textarea value={form.notes} onChange={e => update("notes", e.target.value)} rows={3}
-              className="input-field bg-white dark:bg-surface-dark-elevated resize-none py-4 px-5 shadow-inner" placeholder="Ex: Cadeira de bebê, bagagem extra, paradas solicitadas no caminho..." />
+            <textarea
+              value={form.notes}
+              onChange={e => update("notes", e.target.value)}
+              rows={3}
+              className="input-field bg-white dark:bg-surface-dark-elevated resize-none py-4 px-5 shadow-inner"
+              placeholder="Ex: Cadeira de bebê, bagagem extra, paradas solicitadas no caminho..."
+            />
           </div>
 
           <div className="pt-8 border-t border-surface-border dark:border-surface-dark-border flex flex-col md:flex-row items-center justify-between gap-6">

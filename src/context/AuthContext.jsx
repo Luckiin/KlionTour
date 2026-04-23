@@ -49,8 +49,15 @@ export function AuthProvider({ children }) {
 
   // ─── Login ────────────────────────────────────────────────
   const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email: email.trim(), 
+      password 
+    });
+    
+    if (error) {
+      console.error("Erro no Login:", error);
+      throw new Error(error.message);
+    }
     
     // Busca imediatamente o perfil completo para atualizar o estado local antes do redirect
     const { data: profile } = await supabase
@@ -69,13 +76,17 @@ export function AuthProvider({ children }) {
   const register = async ({ nomeCompleto, email, senha, celular, documento, isEmpresa, endereco, cidade, cep, estado }) => {
     // 1. Cria usuário no Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password: senha,
       options: {
         data: { name: nomeCompleto }, // metadata para o trigger (opcional)
       },
     });
-    if (authError) throw new Error(authError.message);
+    
+    if (authError) {
+      console.error("Erro no Cadastro (Auth):", authError);
+      throw new Error(authError.message);
+    }
 
     const authUser = authData.user;
 
@@ -83,7 +94,7 @@ export function AuthProvider({ children }) {
     const { error: profileError } = await supabase.from("users").insert({
       auth_id:    authUser.id,
       name:       nomeCompleto,
-      email,
+      email:      email.trim(),
       phone:      celular ?? null,
       role:       "client",
       is_empresa: isEmpresa ?? false,
@@ -93,7 +104,11 @@ export function AuthProvider({ children }) {
       cep:        cep?.replace(/\D/g, "") ?? null,
       estado:     estado   ?? null,
     });
-    if (profileError) throw new Error(profileError.message);
+    
+    if (profileError) {
+      console.error("Erro no Cadastro (Profile):", profileError);
+      throw new Error(profileError.message);
+    }
 
     // 3. Busca o perfil recém-criado para atualizar o estado local
     const { data: profile } = await supabase

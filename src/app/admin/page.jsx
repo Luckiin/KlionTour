@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   FileText, DollarSign, Clock, TrendingUp, CheckCircle,
   AlertCircle, ArrowRight, Loader2, ArrowUpRight, Wallet,
 } from "lucide-react";
-import { getAllQuotes } from "@/lib/services/quotes";
-import { getRevenues, getExpenses } from "@/lib/services/financial";
+import { useFinanceiroDashboard } from "@/lib/hooks/useFinanceiro";
+import { useQuotes } from "@/lib/hooks/useQuotes";
 import { QUOTE_STATUSES } from "@/lib/constants";
 import Reveal from "@/components/motion/Reveal";
 import Counter from "@/components/motion/Counter";
@@ -17,24 +16,18 @@ const fmt = (v) =>
   `R$ ${Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
 export default function AdminDashboard() {
-  const [quotes,   setQuotes]   = useState([]);
-  const [revenues, setRevenues] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const { dashboard, isLoading: loadingFinance } = useFinanceiroDashboard();
+  const { quotes = [], isLoading: loadingQuotes } = useQuotes();
 
-  useEffect(() => {
-    Promise.all([getAllQuotes(), getRevenues(), getExpenses()])
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const loading = loadingFinance || loadingQuotes;
 
-  const totalRevenue  = revenues.reduce((a, r) => a + Number(r.amount), 0);
-  const totalExpenses = expenses.reduce((a, e) => a + Number(e.amount), 0);
-  const netProfit     = totalRevenue - totalExpenses;
+  const totalRevenue = dashboard?.recebido_mes || 0;
+  const totalExpenses = dashboard?.pago_mes || 0;
+  const netProfit = dashboard?.saldo_realizado_mes || 0;
 
-  const pending  = quotes.filter(q => q.status === "pending");
+  const pending = quotes.filter(q => q.status === "pending");
   const approved = quotes.filter(q => q.status === "approved");
-  const done     = quotes.filter(q => q.status === "done" || q.status === "paid");
+  const done = quotes.filter(q => q.status === "done" || q.status === "paid");
 
   const KPI = [
     {
@@ -53,17 +46,17 @@ export default function AdminDashboard() {
       href: "/admin/cotacoes", isMoney: false,
     },
     {
-      label: "Receita total", value: totalRevenue,
+      label: "Recebido no Mês", value: totalRevenue,
       icon: DollarSign, accent: "from-emerald-400/40 to-emerald-600/10",
       href: "/admin/financeiro", isMoney: true,
     },
     {
-      label: "Despesas", value: totalExpenses,
+      label: "Pago no Mês", value: totalExpenses,
       icon: TrendingUp, accent: "from-rose-400/40 to-rose-600/10",
       href: "/admin/financeiro", isMoney: true,
     },
     {
-      label: "Lucro líquido", value: netProfit,
+      label: "Saldo Realizado", value: netProfit,
       icon: Wallet,
       accent: netProfit >= 0 ? "from-brand-300/60 to-brand-500/20" : "from-rose-400/40 to-rose-600/10",
       href: "/admin/financeiro", isMoney: true, negative: netProfit < 0,
@@ -84,7 +77,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-10">
-      {/* ====================== KPIs ====================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
         {KPI.map((k, i) => {
           const Icon = k.icon;
@@ -94,7 +86,6 @@ export default function AdminDashboard() {
                 href={k.href}
                 className="group relative block overflow-hidden rounded-3xl border border-surface-border dark:border-surface-dark-border bg-white dark:bg-surface-dark-elevated p-6 hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-500"
               >
-                {/* halo colorido */}
                 <div className={`pointer-events-none absolute -top-20 -right-20 w-56 h-56 rounded-full bg-gradient-to-br ${k.accent} blur-3xl opacity-70 group-hover:opacity-100 transition-opacity`} />
 
                 <div className="flex items-start justify-between relative">
@@ -102,9 +93,8 @@ export default function AdminDashboard() {
                     <p className="text-xs tracking-[0.2em] uppercase text-steel-500 dark:text-steel-400">
                       {k.label}
                     </p>
-                    <div className={`font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tightest mt-3 ${
-                      k.negative ? "text-rose-500" : "text-brand-900 dark:text-white"
-                    }`}>
+                    <div className={`font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tightest mt-3 ${k.negative ? "text-rose-500" : "text-brand-900 dark:text-white"
+                      }`}>
                       {k.isMoney ? (
                         <Counter
                           to={Math.abs(k.value)}
@@ -131,9 +121,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* ====================== RECENTES + PENDENTES ====================== */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recentes */}
         <Reveal className="lg:col-span-2" direction="up" delay={0.05}>
           <div className="card p-7 h-full">
             <div className="flex items-center justify-between mb-6">
@@ -197,7 +185,6 @@ export default function AdminDashboard() {
           </div>
         </Reveal>
 
-        {/* Ação necessária */}
         <Reveal direction="up" delay={0.15}>
           <div className="card p-7 h-full relative overflow-hidden">
             <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-brand-500/10 blur-3xl" />

@@ -216,6 +216,20 @@ create index if not exists idx_expenses_date     on public.expenses (date);
 create index if not exists idx_expenses_category on public.expenses (category);
 
 -- ─────────────────────────────────────────────────────────────
+-- 7. CONFIGURAÇÕES GLOBAIS
+-- ─────────────────────────────────────────────────────────────
+create table if not exists public.app_settings (
+  id                text primary key default 'global',
+  gas_price_per_km  numeric(10,2) not null default 7.50,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+insert into public.app_settings (id, gas_price_per_km)
+values ('global', 7.50)
+on conflict (id) do nothing;
+
+-- ─────────────────────────────────────────────────────────────
 -- 7. ROW LEVEL SECURITY (RLS)
 -- ─────────────────────────────────────────────────────────────
 
@@ -226,6 +240,7 @@ alter table public.veiculos    enable row level security;
 alter table public.quotes      enable row level security;
 alter table public.revenues    enable row level security;
 alter table public.expenses    enable row level security;
+alter table public.app_settings enable row level security;
 
 -- Helper: retorna o role do usuário autenticado
 create or replace function public.get_user_role()
@@ -281,6 +296,14 @@ create policy "expenses: admin only"
   on public.expenses for all
   using (public.get_user_role() = 'admin');
 
+create policy "app_settings: public read"
+  on public.app_settings for select
+  using (true);
+
+create policy "app_settings: admin full access"
+  on public.app_settings for all
+  using (public.get_user_role() = 'admin');
+
 -- ─────────────────────────────────────────────────────────────
 -- 8. TRIGGERS: updated_at automático
 -- ─────────────────────────────────────────────────────────────
@@ -306,6 +329,10 @@ create trigger trg_veiculos_updated_at
 
 create trigger trg_quotes_updated_at
   before update on public.quotes
+  for each row execute function public.set_updated_at();
+
+create trigger trg_app_settings_updated_at
+  before update on public.app_settings
   for each row execute function public.set_updated_at();
 
 -- ─────────────────────────────────────────────────────────────

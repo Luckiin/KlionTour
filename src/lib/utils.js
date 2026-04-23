@@ -21,3 +21,16 @@ export function fmtBRL(v) {
 export function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
+
+export function translateAuthError(msg) {
+  if (!msg) return "";
+  const low = msg.toLowerCase();
+  
+  if (low.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
+  if (low.includes("email not confirmed")) return "E-mail não confirmado. Por favor, verifique seu e-mail e clique no link de ativação para liberar seu acesso.";
+  if (low.includes("user not found")) return "Usuário não encontrado.";
+  if (low.includes("too many requests")) return "Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.";
+  if (low.includes("network error")) return "Erro de rede. Verifique sua conexão com a internet.";
+  
+  return msg || "Ocorreu um erro ao tentar entrar. Verifique seus dados.";
+}

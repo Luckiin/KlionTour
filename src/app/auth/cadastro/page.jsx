@@ -21,6 +21,8 @@ const BENEFITS = [
   "Suporte prioritário",
 ];
 
+import { translateAuthError } from "@/lib/utils";
+
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
@@ -84,7 +86,7 @@ export default function RegisterPage() {
       router.refresh();
       router.push("/painel");
     } catch (err) {
-      setError(err.message || "Erro ao criar conta");
+      setError(translateAuthError(err.message));
     } finally {
       setLoading(false);
     }

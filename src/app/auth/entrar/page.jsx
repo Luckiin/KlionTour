@@ -10,6 +10,8 @@ import { APP_NAME } from "@/lib/constants";
 import ThemeToggle from "@/components/ThemeToggle";
 import Reveal from "@/components/motion/Reveal";
 
+import { translateAuthError } from "@/lib/utils";
+
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
@@ -30,7 +32,7 @@ export default function LoginPage() {
       router.refresh();
       router.push(user.role === "admin" ? "/admin" : "/painel");
     } catch (err) {
-      setError(err.message);
+      setError(translateAuthError(err.message));
     } finally {
       setLoading(false);
     }

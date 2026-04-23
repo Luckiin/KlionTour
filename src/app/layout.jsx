@@ -12,10 +12,12 @@ export const metadata = {
   description:
     "Frete a van ideal para seu grupo. Conforto, segurança e preço justo.",
   keywords: ["fretamento", "van", "transporte", "viagem", "grupo"],
+};
+
+export const viewport = {
   themeColor: "#19335a",
 };
 
-// Evita flash de tema ao carregar: aplica a classe `dark` antes do React montar
 const themeInitScript = `
 (function(){
   try {
