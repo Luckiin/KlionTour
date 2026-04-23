@@ -70,9 +70,11 @@ export default function ModalLancamento({ tipo = "receita", original = null, onC
       ...formData,
       valor: Number(String(formData.valor).replace(/\D/g, "")) / 100,
       valor_pago: formData.valor_pago ? Number(String(formData.valor_pago).replace(/\D/g, "")) / 100 : null,
-      // Converte string vazia em NULL para evitar erro de UUID no Postgres
+      // Converte string vazia em NULL para evitar erro de UUID ou DATE no Postgres
       categoria_id: formData.categoria_id || null,
       conta_id: formData.conta_id || null,
+      data_pagamento: formData.data_pagamento || null,
+      data_vencimento: formData.data_vencimento || null,
     };
 
     try {

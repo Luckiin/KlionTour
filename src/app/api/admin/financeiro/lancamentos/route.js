@@ -9,6 +9,17 @@ export async function GET(request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // Busca o perfil para verificar o role
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const tipo    = searchParams.get("tipo");
     const status  = searchParams.get("status");
@@ -16,7 +27,11 @@ export async function GET(request) {
     const limit   = Number(searchParams.get("limit")) || 100;
     const offset  = Number(searchParams.get("offset")) || 0;
 
-    let query = supabase
+    // Usamos o Admin Client para bypassar RLS no GET e ver todos os lançamentos
+    const { createAdminClient } = await import("@/lib/supabase-server");
+    const adminSupabase = createAdminClient();
+
+    let query = adminSupabase
       .from("lancamentos")
       .select("*, categorias_financeiras(id,nome,cor), contas(id,nome), quotes(id,from_city,to_city), users(id,name)", { count: "exact" })
       .order("data_vencimento", { ascending: true })
@@ -46,15 +61,33 @@ export async function POST(request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // Busca o perfil para verificar o role e obter o ID público
+    const { data: profile } = await supabase
+      .from("users")
+      .select("id, role")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: "Acesso negado. Apenas administradores." }, { status: 403 });
+    }
+
     const payload = await request.json();
     
-    // Injeta o cliente_id do usuário logado para satisfazer RLS
+    // Prepara o payload final
     const finalPayload = {
       ...payload,
-      cliente_id: user.id
+      // Se não vier um cliente_id, associa ao ID público do admin que está criando
+      cliente_id: payload.cliente_id || profile.id,
+      data_pagamento: payload.data_pagamento || null,
+      valor_pago: payload.valor_pago || null,
     };
 
-    const { data, error } = await supabase
+    // Usamos o Admin Client para bypassar RLS e permitir o insert
+    const { createAdminClient } = await import("@/lib/supabase-server");
+    const adminSupabase = createAdminClient();
+
+    const { data, error } = await adminSupabase
       .from("lancamentos")
       .insert(finalPayload)
       .select("*, categorias_financeiras(id,nome,cor), contas(id,nome)")

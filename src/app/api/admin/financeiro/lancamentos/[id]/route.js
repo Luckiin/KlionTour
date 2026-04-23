@@ -8,10 +8,24 @@ export async function PUT(request, { params }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // Verifica se é admin
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
     const { id }    = params;
     const payload   = await request.json();
 
-    const { data, error } = await supabase
+    const { createAdminClient } = await import("@/lib/supabase-server");
+    const adminSupabase = createAdminClient();
+
+    const { data, error } = await adminSupabase
       .from("lancamentos")
       .update(payload)
       .eq("id", id)
@@ -32,9 +46,23 @@ export async function DELETE(request, { params }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // Verifica se é admin
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
     const { id }    = params;
 
-    const { error } = await supabase
+    const { createAdminClient } = await import("@/lib/supabase-server");
+    const adminSupabase = createAdminClient();
+
+    const { error } = await adminSupabase
       .from("lancamentos")
       .delete()
       .eq("id", id);

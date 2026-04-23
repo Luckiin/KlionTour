@@ -9,6 +9,21 @@ export async function GET() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
+    // Busca o perfil para verificar o role
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    // Usamos o Admin Client para bypassar RLS no Dashboard e obter totais reais
+    const { createAdminClient } = await import("@/lib/supabase-server");
+    const adminSupabase = createAdminClient();
+
     const hoje = new Date().toISOString().split("T")[0];
     const mesAtual = hoje.slice(0, 7);
     const inicioMes = `${mesAtual}-01`;
@@ -28,29 +43,29 @@ export async function GET() {
       { data: receitasAnoExec },
       { data: despesasAnoExec },
     ] = await Promise.all([
-      supabase.from("contas").select("saldo_atual").eq("ativo", true),
-      supabase.from("lancamentos").select("*", { count: "exact", head: true })
+      adminSupabase.from("contas").select("saldo_atual").eq("ativo", true),
+      adminSupabase.from("lancamentos").select("*", { count: "exact", head: true })
         .eq("tipo", "despesa").eq("status", "pendente"),
-      supabase.from("lancamentos").select("*", { count: "exact", head: true })
+      adminSupabase.from("lancamentos").select("*", { count: "exact", head: true })
         .eq("tipo", "receita").eq("status", "pendente"),
-      supabase.from("lancamentos").select("*", { count: "exact", head: true })
+      adminSupabase.from("lancamentos").select("*", { count: "exact", head: true })
         .eq("tipo", "despesa").eq("status", "pendente").lt("data_vencimento", hoje),
-      supabase.from("lancamentos").select("valor, valor_pago")
+      adminSupabase.from("lancamentos").select("valor, valor_pago")
         .eq("tipo", "despesa").eq("status", "pago")
         .gte("data_pagamento", inicioMes).lte("data_pagamento", fimMes),
-      supabase.from("lancamentos").select("valor, valor_pago")
+      adminSupabase.from("lancamentos").select("valor, valor_pago")
         .eq("tipo", "receita").eq("status", "pago")
         .gte("data_pagamento", inicioMes).lte("data_pagamento", fimMes),
-      supabase.from("lancamentos").select("valor")
+      adminSupabase.from("lancamentos").select("valor")
         .eq("tipo", "receita").eq("status", "pendente")
         .gte("data_vencimento", inicioMes).lte("data_vencimento", fimMes),
-      supabase.from("lancamentos").select("valor")
+      adminSupabase.from("lancamentos").select("valor")
         .eq("tipo", "despesa").eq("status", "pendente")
         .gte("data_vencimento", inicioMes).lte("data_vencimento", fimMes),
-      supabase.from("lancamentos").select("valor, valor_pago, data_pagamento")
+      adminSupabase.from("lancamentos").select("valor, valor_pago, data_pagamento")
         .eq("tipo", "receita").eq("status", "pago")
         .gte("data_pagamento", `${anoAtual}-01-01`).lte("data_pagamento", `${anoAtual}-12-31`),
-      supabase.from("lancamentos").select("valor, valor_pago, data_pagamento")
+      adminSupabase.from("lancamentos").select("valor, valor_pago, data_pagamento")
         .eq("tipo", "despesa").eq("status", "pago")
         .gte("data_pagamento", `${anoAtual}-01-01`).lte("data_pagamento", `${anoAtual}-12-31`),
     ]);
