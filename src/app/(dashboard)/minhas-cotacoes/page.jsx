@@ -19,9 +19,11 @@ export default function MinhasCotacoesPage() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [counterNote, setCounterNote] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [filter, setFilter] = useState("all");
+  const [counterNote, setCounterNote]   = useState("");
+  const [counterPrice, setCounterPrice] = useState("");
+  const [saving, setSaving]             = useState(false);
+  const [filter, setFilter]             = useState("all");
+  const [showConfirm, setShowConfirm]   = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -39,19 +41,22 @@ export default function MinhasCotacoesPage() {
   const handleAction = async (id, status, noteSuffix) => {
     setSaving(true);
     try {
-      const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const currentNote = selected.admin_notes || "";
-      const logEntry = noteSuffix ? `\n\n[Cliente ${now}]: ${noteSuffix}` : "";
+      const priceMsg = counterPrice ? ` [Sugestão: R$ ${Number(counterPrice).toLocaleString("pt-BR")}]` : "";
+      const newEntry = noteSuffix ? `[Cliente ${now}]: ${noteSuffix}${priceMsg}` : `[Cliente ${now}]: Contraproposta enviada.${priceMsg}`;
       
       const updates = { 
         status, 
-        admin_notes: currentNote + logEntry 
+        admin_notes: currentNote ? `${currentNote}\n\n${newEntry}` : newEntry,
+        total_price: counterPrice ? Number(counterPrice) : selected.total_price
       };
 
       const updated = await updateQuote(id, updates);
       setQuotes(prev => prev.map(q => q.id === id ? updated : q));
       setSelected(updated);
       setCounterNote("");
+      setCounterPrice("");
     } catch (err) {
       alert("Erro ao processar: " + err.message);
     } finally {
@@ -198,23 +203,43 @@ export default function MinhasCotacoesPage() {
 
                    <div className="flex-1 space-y-6 overflow-y-auto max-h-[300px] pr-4 scrollbar-hide">
                      {selected.admin_notes ? (
-                       selected.admin_notes.split('\n\n').map((msg, i) => {
-                         const isClient = msg.includes("[Cliente");
-                         return (
-                           <div key={i} className={`flex flex-col ${isClient ? "items-end" : "items-start"}`}>
-                             <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
-                               isClient 
-                                ? "bg-brand-500 text-white rounded-br-none" 
-                                : "bg-white dark:bg-surface-dark-elevated text-brand-900 dark:text-white border border-surface-border dark:border-surface-dark-border rounded-bl-none shadow-sm"
-                             }`}>
-                               {msg.split(']:')[1] || msg}
-                             </div>
-                             <span className="text-[9px] font-bold text-steel-500 mt-2 uppercase tracking-widest px-2">
-                               {msg.match(/\[(.*?)\]/)?.[1] || "KlionTour Admin"}
-                             </span>
-                           </div>
-                         );
-                       })
+                       selected.admin_notes
+                        .split('\n\n')
+                        .filter(msg => msg.trim())
+                        .map(msg => {
+                          // Extrair data/hora para ordenação: [Role DD/MM, HH:MM:SS] ou [Role DD/MM, HH:MM]
+                          const match = msg.match(/\[.*?\s(\d{2})\/(\d{2}),\s(\d{2}):(\d{2})(?::(\d{2}))?\]/);
+                          let timestamp = 0;
+                          if (match) {
+                            const [, d, m, h, min, s] = match;
+                            timestamp = new Date(new Date().getFullYear(), m - 1, d, h, min, s || 0).getTime();
+                          }
+                          return { content: msg, timestamp, isClient: msg.includes("[Cliente") };
+                        })
+                        .sort((a, b) => {
+                          if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+                          // Desempate para horários idênticos: Cliente primeiro, Admin depois
+                          if (a.isClient && !b.isClient) return -1;
+                          if (!a.isClient && b.isClient) return 1;
+                          return 0;
+                        })
+                        .map(({ content: msg }, i) => {
+                          const isClient = msg.includes("[Cliente");
+                          return (
+                            <div key={i} className={`flex flex-col ${isClient ? "items-end" : "items-start"}`}>
+                              <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+                                isClient 
+                                 ? "bg-brand-500 text-white rounded-br-none" 
+                                 : "bg-white dark:bg-surface-dark-elevated text-brand-900 dark:text-white border border-surface-border dark:border-surface-dark-border rounded-bl-none shadow-sm"
+                              }`}>
+                                {msg.split(']:')[1] || msg}
+                              </div>
+                              <span className="text-[9px] font-bold text-steel-500 mt-2 uppercase tracking-widest px-2">
+                                {msg.match(/\[(.*?)\]/)?.[1] || "KlionTour Admin"}
+                              </span>
+                            </div>
+                          );
+                        })
                      ) : (
                        <div className="h-full flex items-center justify-center text-steel-500 italic text-xs">
                          Nenhum histórico registrado ainda.
@@ -233,23 +258,45 @@ export default function MinhasCotacoesPage() {
                        >
                          {selected.status === "proposed" && (
                            <>
-                             <div className="flex flex-col gap-3">
-                               <textarea 
-                                 value={counterNote}
-                                 onChange={(e) => setCounterNote(e.target.value)}
-                                 placeholder="Deseja pedir um desconto ou sugerir mudança? Digite aqui..."
-                                 className="input-field bg-white/50 dark:bg-surface-dark-elevated/50 text-sm py-4 h-24 resize-none"
-                               />
+                             <div className="flex flex-col gap-4">
+                               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                 <div className="md:col-span-1 space-y-1.5">
+                                   <label className="text-[10px] font-bold text-brand-900 dark:text-white uppercase tracking-widest ml-1">Sugerir Valor</label>
+                                   <div className="relative">
+                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-steel-400 text-xs font-bold">R$</span>
+                                     <input 
+                                       type="text" 
+                                       value={counterPrice ? Number(counterPrice).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : ""}
+                                       onChange={(e) => {
+                                         const val = e.target.value.replace(/\D/g, "");
+                                         setCounterPrice(val ? (Number(val) / 100).toString() : "");
+                                       }}
+                                       placeholder="0,00"
+                                       className="input-field pl-9 text-sm font-bold bg-white/50 dark:bg-surface-dark-elevated/50"
+                                     />
+                                   </div>
+                                 </div>
+                                 <div className="md:col-span-3 space-y-1.5">
+                                   <label className="text-[10px] font-bold text-brand-900 dark:text-white uppercase tracking-widest ml-1">Sua Mensagem</label>
+                                   <textarea 
+                                     value={counterNote}
+                                     onChange={(e) => setCounterNote(e.target.value)}
+                                     placeholder="Explique o motivo da contraproposta ou peça um desconto..."
+                                     className="input-field bg-white/50 dark:bg-surface-dark-elevated/50 text-sm py-3 h-[42px] resize-none"
+                                   />
+                                 </div>
+                               </div>
+                               
                                <div className="flex gap-4">
+                                   <button 
+                                     disabled={saving}
+                                     onClick={() => setShowConfirm(true)}
+                                     className="btn-primary flex-1 py-4 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                                   >
+                                     {saving ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle2 size={18} /> Aceitar Valor Proposto</>}
+                                   </button>
                                   <button 
-                                    disabled={saving}
-                                    onClick={() => handleAction(selected.id, "approved")}
-                                    className="btn-primary flex-1 py-4 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2"
-                                  >
-                                    {saving ? <Loader2 size={16} className="animate-spin" /> : <><CheckCircle2 size={18} /> Aceitar Valor Proposto</>}
-                                  </button>
-                                  <button 
-                                    disabled={saving || !counterNote}
+                                    disabled={saving || (!counterNote && !counterPrice)}
                                     onClick={() => handleAction(selected.id, "negotiating", counterNote)}
                                     className="flex-1 bg-white dark:bg-surface-dark-elevated border border-brand-500 text-brand-500 font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-brand-50 transition-colors disabled:opacity-40"
                                   >
@@ -279,6 +326,54 @@ export default function MinhasCotacoesPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Confirmação de Aprovação */}
+      <AnimatePresence>
+        {showConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowConfirm(false)}
+              className="absolute inset-0 bg-brand-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="card glass w-full max-w-md relative z-10 p-8 shadow-2xl border-emerald-500/20"
+            >
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto mb-6">
+                <CheckCircle2 size={32} />
+              </div>
+              
+              <div className="text-center space-y-2 mb-8">
+                <h3 className="text-2xl font-serif font-medium text-brand-900 dark:text-white">Confirmar Viagem?</h3>
+                <p className="text-sm text-steel-500">
+                  Deseja aceitar o valor de <span className="font-bold text-brand-600 dark:text-brand-400">{fmtBRL(selected?.total_price || selected?.price)}</span> e confirmar sua reserva?
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-steel-500 bg-surface-subtle dark:bg-surface-dark-subtle hover:bg-steel-100 transition-all"
+                >
+                  Voltar
+                </button>
+                <button 
+                  onClick={async () => {
+                    setShowConfirm(false);
+                    await handleAction(selected.id, "approved");
+                  }}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white bg-emerald-500 shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition-all"
+                >
+                  Confirmar e Reservar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

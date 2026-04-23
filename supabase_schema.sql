@@ -279,6 +279,10 @@ create policy "quotes: client inserts own"
   on public.quotes for insert
   with check (user_id = (select id from public.users where auth_id = auth.uid()));
 
+create policy "quotes: client updates own"
+  on public.quotes for update
+  using (user_id = (select id from public.users where auth_id = auth.uid()));
+
 -- ── motoristas, veiculos, revenues, expenses ─────────────────
 create policy "motoristas: admin only"
   on public.motoristas for all

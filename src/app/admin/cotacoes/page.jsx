@@ -17,6 +17,7 @@ export default function AdminCotacoesPage() {
   const [adminNote, setAdminNote] = useState("");
   const [newPrice,  setNewPrice]  = useState("");
   const [saving,    setSaving]    = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const loadQuotes = useCallback(async () => {
     try {
@@ -125,7 +126,7 @@ export default function AdminCotacoesPage() {
               return (
                 <Reveal key={q.id} direction="up" delay={i * 0.02}>
                   <button
-                    onClick={() => { setSelected(q); setAdminNote(q.admin_notes || ""); setNewPrice(q.total_price || ""); }}
+                    onClick={() => { setSelected(q); setAdminNote(""); setNewPrice(q.total_price || ""); }}
                     className={`w-full card overflow-hidden group transition-all duration-300 ${isSelected ? "ring-2 ring-brand-500 shadow-soft-lg" : "hover:shadow-md"}`}>
                     <div className={`p-5 flex items-start justify-between gap-4 ${isSelected ? "bg-brand-500/5" : ""}`}>
                       <div className="min-w-0 text-left">
@@ -234,10 +235,20 @@ export default function AdminCotacoesPage() {
                       </div>
 
                       <div className="flex gap-4">
+                        {selected.status === "negotiating" && (
+                          <button disabled={saving}
+                            onClick={() => setShowConfirm(true)}
+                            className="px-8 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-2xl font-bold text-xs uppercase tracking-widest transition-all">
+                            <CheckCircle size={18} /> Aceitar
+                          </button>
+                        )}
+
                         <button disabled={saving}
                           onClick={() => {
-                            const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                            const newFullNote = `[Admin ${now}]: ${adminNote || "Proposta enviada."}${selected.admin_notes ? "\n\n" + selected.admin_notes : ""}`;
+                            const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            const newEntry = `[Admin ${now}]: ${adminNote || "Proposta enviada."}`;
+                            const newFullNote = selected.admin_notes ? `${selected.admin_notes}\n\n${newEntry}` : newEntry;
+                            
                             handleAction(selected.id, {
                               status:      "proposed",
                               admin_notes: newFullNote,
@@ -245,7 +256,7 @@ export default function AdminCotacoesPage() {
                             });
                           }}
                           className="btn-primary flex-1 py-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-brand-500/20">
-                          {saving ? "Processando..." : <><CheckCircle size={18} /> Enviar Proposta</>}
+                          {saving ? "Processando..." : <><CheckCircle size={18} /> Enviar Nova Proposta</>}
                         </button>
                         
                         {(selected.status === "pending" || selected.status === "negotiating") && (
@@ -293,11 +304,48 @@ export default function AdminCotacoesPage() {
 
                   {selected.admin_notes && (
                     <div className="bg-surface-subtle dark:bg-surface-dark-subtle/50 rounded-2xl p-6 border border-surface-border dark:border-surface-dark-border">
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3 mb-6">
                         <MessageSquare size={16} className="text-brand-500" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-900 dark:text-white">Relatório de Atividades Admin</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-900 dark:text-white">Relatório de Atividades / Chat</span>
                       </div>
-                      <p className="text-xs text-brand-900/60 dark:text-white/60 leading-relaxed whitespace-pre-wrap">{selected.admin_notes}</p>
+                      
+                      <div className="space-y-6 overflow-y-auto max-h-[400px] pr-2 scrollbar-hide">
+                        {selected.admin_notes
+                          .split('\n\n')
+                          .filter(msg => msg.trim())
+                          .map(msg => {
+                            const match = msg.match(/\[.*?\s(\d{2})\/(\d{2}),\s(\d{2}):(\d{2})(?::(\d{2}))?\]/);
+                            let timestamp = 0;
+                            if (match) {
+                              const [, d, m, h, min, s] = match;
+                              timestamp = new Date(new Date().getFullYear(), m - 1, d, h, min, s || 0).getTime();
+                            }
+                            return { content: msg, timestamp, isClient: msg.includes("[Cliente") };
+                          })
+                          .sort((a, b) => {
+                            if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+                            if (a.isClient && !b.isClient) return -1;
+                            if (!a.isClient && b.isClient) return 1;
+                            return 0;
+                          })
+                          .map(({ content: msg }, i) => {
+                            const isClient = msg.includes("[Cliente");
+                            return (
+                              <div key={i} className={`flex flex-col ${isClient ? "items-start" : "items-end"}`}>
+                                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+                                  !isClient 
+                                    ? "bg-brand-500 text-white rounded-br-none shadow-md" 
+                                    : "bg-white dark:bg-surface-dark-elevated text-brand-900 dark:text-white border border-surface-border dark:border-surface-dark-border rounded-bl-none shadow-sm"
+                                }`}>
+                                  {msg.split(']:')[1] || msg}
+                                </div>
+                                <span className="text-[9px] font-bold text-steel-500 mt-2 uppercase tracking-widest px-2">
+                                  {msg.match(/\[(.*?)\]/)?.[1] || "Admin"}
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -306,6 +354,58 @@ export default function AdminCotacoesPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmação de Aprovação */}
+      <AnimatePresence>
+        {showConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowConfirm(false)}
+              className="absolute inset-0 bg-brand-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="card glass w-full max-w-md relative z-10 p-8 shadow-2xl border-emerald-500/20"
+            >
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto mb-6">
+                <CheckCircle size={32} />
+              </div>
+              
+              <div className="text-center space-y-2 mb-8">
+                <h3 className="text-2xl font-serif font-medium text-brand-900 dark:text-white">Aprovar Viagem?</h3>
+                <p className="text-sm text-steel-500">
+                  Deseja aceitar a contraproposta de <span className="font-bold text-brand-600 dark:text-brand-400">R$ {Number(selected?.total_price).toLocaleString("pt-BR")}</span> e finalizar a negociação?
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-steel-500 bg-surface-subtle dark:bg-surface-dark-subtle hover:bg-steel-100 transition-all"
+                >
+                  Voltar
+                </button>
+                <button 
+                  onClick={async () => {
+                    setShowConfirm(false);
+                    await handleAction(selected.id, {
+                      status:      "approved",
+                      admin_notes: `[Admin]: Contraproposta aceita. Viagem aprovada!${selected.admin_notes ? "\n\n" + selected.admin_notes : ""}`,
+                      total_price: selected.total_price,
+                    });
+                  }}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-white bg-emerald-500 shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 transition-all"
+                >
+                  Sim, Aprovar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

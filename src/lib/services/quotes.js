@@ -48,9 +48,10 @@ export async function updateQuote(id, updates) {
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
+  if (!quote) throw new Error("Cotação não encontrada ou acesso negado.");
 
   // 2. Automação Financeira: Se aprovado, criar "A Receber"
   if (updates.status === "approved" || updates.status === "paid") {
