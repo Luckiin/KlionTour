@@ -9,14 +9,14 @@ import Reveal from "@/components/motion/Reveal";
 const MONEY = (v) => "R$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
 export default function AdminCotacoesPage() {
-  const [quotes,    setQuotes]    = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [filter,    setFilter]    = useState("all");
-  const [search,    setSearch]    = useState("");
-  const [selected,  setSelected]  = useState(null);
+  const [quotes, setQuotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null);
   const [adminNote, setAdminNote] = useState("");
-  const [newPrice,  setNewPrice]  = useState("");
-  const [saving,    setSaving]    = useState(false);
+  const [newPrice, setNewPrice] = useState("");
+  const [saving, setSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const loadQuotes = useCallback(async () => {
@@ -55,18 +55,18 @@ export default function AdminCotacoesPage() {
     .filter(q => {
       if (!search) return true;
       const s = search.toLowerCase();
-      return q.user_name?.toLowerCase().includes(s)  ||
-             q.from_city?.toLowerCase().includes(s)  ||
-             q.to_city?.toLowerCase().includes(s)    ||
-             q.user_email?.toLowerCase().includes(s);
+      return q.user_name?.toLowerCase().includes(s) ||
+        q.from_city?.toLowerCase().includes(s) ||
+        q.to_city?.toLowerCase().includes(s) ||
+        q.user_email?.toLowerCase().includes(s);
     });
 
   const counts = {
-    all:      quotes.length,
-    pending:  quotes.filter(q => q.status === "pending").length,
+    all: quotes.length,
+    pending: quotes.filter(q => q.status === "pending").length,
     approved: quotes.filter(q => q.status === "approved").length,
-    paid:     quotes.filter(q => q.status === "paid").length,
-    done:     quotes.filter(q => q.status === "done").length,
+    paid: quotes.filter(q => q.status === "paid").length,
+    done: quotes.filter(q => q.status === "done").length,
     rejected: quotes.filter(q => q.status === "rejected").length,
   };
 
@@ -89,14 +89,14 @@ export default function AdminCotacoesPage() {
             className="input-field input-icon" placeholder="Buscar por cliente, aeronave ou destino..." />
         </div>
         <div className="flex gap-2 flex-wrap justify-center">
-          {Object.entries({ 
-            all:"Todas", 
-            pending:"Pendentes", 
+          {Object.entries({
+            all: "Todas",
+            pending: "Pendentes",
             proposed: "Propostas",
-            approved:"Aprovadas", 
-            paid:"Pagas", 
-            done:"Concluídas", 
-            rejected:"Recusadas" 
+            approved: "Aprovadas",
+            paid: "Pagas",
+            done: "Concluídas",
+            rejected: "Recusadas"
           }).map(([val, label]) => (
             <button key={val} onClick={() => setFilter(val)}
               className={`text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl font-bold transition-all ${filter === val ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30" : "bg-surface-subtle dark:bg-surface-dark-subtle text-steel-500 dark:text-steel-400 hover:bg-brand-500/10"}`}>
@@ -190,12 +190,14 @@ export default function AdminCotacoesPage() {
                   <div className="bg-surface-subtle/30 dark:bg-surface-dark-subtle/20 rounded-3xl overflow-hidden border border-surface-border dark:border-surface-dark-border">
                     <div className="divide-y divide-surface-border dark:divide-surface-dark-border">
                       {[
-                        ["Rota Solicitada",        <div className="flex items-center gap-2 font-bold text-brand-900 dark:text-white">{selected.from_city} <ChevronRight size={12} className="text-steel-400" /> {selected.to_city}</div>],
-                        ["Data de Ida",    new Date(selected.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long", year: "numeric" })],
-                        selected.return_date && ["Data de Volta", new Date(selected.return_date + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long", year: "numeric" })],
+                        ["Rota Solicitada", <div className="flex items-center gap-2 font-bold text-brand-900 dark:text-white">{selected.from_city} <ChevronRight size={12} className="text-steel-400" /> {selected.to_city}</div>],
+                        ["Data de Ida", new Date(selected.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })],
+                        selected.return_date && ["Data de Volta", new Date(selected.return_date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })],
                         ["Passageiros", `${selected.passengers} pessoas`],
-                        ["Modelo de Aeronave/Van",         selected.van_name],
-                        ["Data de Solicitação",  new Date(selected.created_at).toLocaleString("pt-BR")],
+                        ["Modelo de Aeronave/Van", selected.van_name],
+                        ["Valor Estimado", MONEY(selected.price)],
+                        ["Valor da Proposta (Atual com desconto)", selected.total_price ? MONEY(selected.total_price) : "A definir"],
+                        ["Data de Solicitação", new Date(selected.created_at).toLocaleString("pt-BR")],
                       ].filter(Boolean).map(([label, val]) => (
                         <div key={label} className="flex justify-between px-6 py-4 items-center">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-steel-500 dark:text-steel-400">{label}</span>
@@ -248,9 +250,9 @@ export default function AdminCotacoesPage() {
                             const now = new Date().toLocaleString("pt-BR", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                             const newEntry = `[Admin ${now}]: ${adminNote || "Proposta enviada."}`;
                             const newFullNote = selected.admin_notes ? `${selected.admin_notes}\n\n${newEntry}` : newEntry;
-                            
+
                             handleAction(selected.id, {
-                              status:      "proposed",
+                              status: "proposed",
                               admin_notes: newFullNote,
                               total_price: newPrice ? Number(newPrice) : selected.total_price,
                             });
@@ -258,13 +260,13 @@ export default function AdminCotacoesPage() {
                           className="btn-primary flex-1 py-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-brand-500/20">
                           {saving ? "Processando..." : <><CheckCircle size={18} /> Enviar Nova Proposta</>}
                         </button>
-                        
+
                         {(selected.status === "pending" || selected.status === "negotiating") && (
                           <button disabled={saving}
                             onClick={() => {
-                              if(!confirm("Atenção: Deseja realmente recusar esta cotação?")) return;
+                              if (!confirm("Atenção: Deseja realmente recusar esta cotação?")) return;
                               handleAction(selected.id, {
-                                status:      "rejected",
+                                status: "rejected",
                                 admin_notes: `[Admin]: Recusado. ${adminNote}`,
                               });
                             }}
@@ -278,9 +280,9 @@ export default function AdminCotacoesPage() {
 
                   {selected.status === "proposed" && (
                     <div className="p-6 rounded-3xl bg-blue-500/5 border border-blue-500/20 text-center">
-                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                         Proposta enviada! Aguardando resposta do cliente...
-                       </p>
+                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                        Proposta enviada! Aguardando resposta do cliente...
+                      </p>
                     </div>
                   )}
 
@@ -308,7 +310,7 @@ export default function AdminCotacoesPage() {
                         <MessageSquare size={16} className="text-brand-500" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-brand-900 dark:text-white">Relatório de Atividades / Chat</span>
                       </div>
-                      
+
                       <div className="space-y-6 overflow-y-auto max-h-[400px] pr-2 scrollbar-hide">
                         {selected.admin_notes
                           .split('\n\n')
@@ -332,11 +334,10 @@ export default function AdminCotacoesPage() {
                             const isClient = msg.includes("[Cliente");
                             return (
                               <div key={i} className={`flex flex-col ${isClient ? "items-start" : "items-end"}`}>
-                                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
-                                  !isClient 
-                                    ? "bg-brand-500 text-white rounded-br-none shadow-md" 
-                                    : "bg-white dark:bg-surface-dark-elevated text-brand-900 dark:text-white border border-surface-border dark:border-surface-dark-border rounded-bl-none shadow-sm"
-                                }`}>
+                                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${!isClient
+                                  ? "bg-brand-500 text-white rounded-br-none shadow-md"
+                                  : "bg-white dark:bg-surface-dark-elevated text-brand-900 dark:text-white border border-surface-border dark:border-surface-dark-border rounded-bl-none shadow-sm"
+                                  }`}>
                                   {msg.split(']:')[1] || msg}
                                 </div>
                                 <span className="text-[9px] font-bold text-steel-500 mt-2 uppercase tracking-widest px-2">
@@ -359,12 +360,12 @@ export default function AdminCotacoesPage() {
       <AnimatePresence>
         {showConfirm && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowConfirm(false)}
               className="absolute inset-0 bg-brand-900/40 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -373,7 +374,7 @@ export default function AdminCotacoesPage() {
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto mb-6">
                 <CheckCircle size={32} />
               </div>
-              
+
               <div className="text-center space-y-2 mb-8">
                 <h3 className="text-2xl font-serif font-medium text-brand-900 dark:text-white">Aprovar Viagem?</h3>
                 <p className="text-sm text-steel-500">
@@ -382,17 +383,17 @@ export default function AdminCotacoesPage() {
               </div>
 
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => setShowConfirm(false)}
                   className="flex-1 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-steel-500 bg-surface-subtle dark:bg-surface-dark-subtle hover:bg-steel-100 transition-all"
                 >
                   Voltar
                 </button>
-                <button 
+                <button
                   onClick={async () => {
                     setShowConfirm(false);
                     await handleAction(selected.id, {
-                      status:      "approved",
+                      status: "approved",
                       admin_notes: `[Admin]: Contraproposta aceita. Viagem aprovada!${selected.admin_notes ? "\n\n" + selected.admin_notes : ""}`,
                       total_price: selected.total_price,
                     });
