@@ -47,13 +47,13 @@ export default function Header() {
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
         scrolled
           ? "backdrop-blur-xl bg-white/70 dark:bg-surface-dark/70 border-b border-surface-border/70 dark:border-surface-dark-border/70 shadow-soft"
-          : "bg-transparent border-b border-transparent"
+          : "bg-white/5 backdrop-blur-md border-b border-white/10"
       }`}
     >
       <div className={`container-x flex items-center justify-between transition-all duration-500 ${scrolled ? "h-14" : "h-16"}`}>
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-900 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/20 transition-transform group-hover:scale-110">
             <span className="font-serif text-white text-lg leading-none">K</span>
           </div>
           <div className="flex flex-col leading-none">

@@ -28,7 +28,7 @@ export default function SimulationHeroForm() {
       .then((settings) => {
         if (active) setGasPricePerKm(settings.gas_price_per_km);
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       active = false;
@@ -52,7 +52,7 @@ export default function SimulationHeroForm() {
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distancia = (R * c) * 1.3;
-      
+
       const { price } = calculateTransportQuote(distancia, tipo, gasPricePerKm ?? undefined);
       setEstimate(price);
     } else {
@@ -113,7 +113,7 @@ export default function SimulationHeroForm() {
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(11);
         doc.setFont("helvetica", "normal");
-        doc.text("Fretamento Executivo de Vans", 14, 32);
+        doc.text("Fretamento de Vans", 14, 32);
         doc.setTextColor(200, 200, 200);
         doc.text("kliontour.com.br", 14, 38);
 
@@ -219,109 +219,109 @@ export default function SimulationHeroForm() {
       <div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 to-brand-900/20 rounded-[2rem] blur-2xl opacity-0 group-hover/form:opacity-100 transition duration-1000"></div>
 
       <div className="relative bg-[#0c1220]/60 backdrop-blur-3xl p-6 md:p-8 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-7xl mx-auto">
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => !t.disabled && setTipo(t.id)}
-            disabled={t.disabled}
-            className={`px-5 py-2 rounded-full text-xs tracking-widest uppercase font-semibold transition-all duration-300 ${tipo === t.id
-              ? "bg-brand-500 text-white shadow-[0_0_20px_rgba(36,204,78,0.3)] scale-105"
-              : t.disabled
-                ? "bg-white/5 text-white/25 cursor-not-allowed"
-                : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
-              }`}
-            title={t.disabled ? "Opção temporariamente desabilitada" : undefined}
-          >
-            {t.label}
-          </button>
-        ))}
-        {estimate && (
-          <div className="ml-auto hidden sm:flex items-center gap-3 bg-brand-500/10 border border-brand-500/20 px-4 py-1.5 rounded-full animate-in fade-in slide-in-from-right-4 duration-500">
-             <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">Valor Estimado:</span>
-             <span className="text-sm font-serif font-medium text-brand-300">R$ {Number(estimate).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="flex flex-col lg:flex-row items-end gap-4">
-          <div className="flex-1 w-full text-left">
-            <CityInput
-              id="hero-from"
-              label="Origem"
-              labelClassName={labelStyle}
-              inputClassName={inputStyle + " pl-10"}
-              value={form.from}
-              onChange={v => update("from", v)}
-              onCoordinateSelect={c => { update("fromLat", c.lat); update("fromLon", c.lon); }}
-              placeholder="Saindo de onde?"
-            />
-          </div>
-          <div className="flex-1 w-full text-left">
-            <CityInput
-              id="hero-to"
-              label="Destino"
-              labelClassName={labelStyle}
-              inputClassName={inputStyle + " pl-10"}
-              value={form.to}
-              onChange={v => update("to", v)}
-              onCoordinateSelect={c => { update("toLat", c.lat); update("toLon", c.lon); }}
-              placeholder="Para onde vamos?"
-            />
-          </div>
-
-          <div className="w-full md:w-40 text-left">
-            <label className={labelStyle}>Data Ida</label>
-            <input
-              type="date"
-              value={form.date}
-              onChange={e => update("date", e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              className={inputStyle + " px-3"}
-              required
-            />
-          </div>
-
-          {tipo === "ida_volta" && (
-            <div className="w-full md:w-40 text-left shrink-0">
-              <label className={labelStyle}>Data Volta</label>
-              <input
-                type="date"
-                value={form.returnDate}
-                onChange={e => update("returnDate", e.target.value)}
-                min={form.date || new Date().toISOString().split("T")[0]}
-                className={inputStyle + " px-3"}
-                required={tipo === "ida_volta"}
-              />
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => !t.disabled && setTipo(t.id)}
+              disabled={t.disabled}
+              className={`px-5 py-2 rounded-full text-xs tracking-widest uppercase font-semibold transition-all duration-300 ${tipo === t.id
+                ? "bg-brand-500 text-white shadow-[0_0_20px_rgba(36,204,78,0.3)] scale-105"
+                : t.disabled
+                  ? "bg-white/5 text-white/25 cursor-not-allowed"
+                  : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }`}
+              title={t.disabled ? "Opção temporariamente desabilitada" : undefined}
+            >
+              {t.label}
+            </button>
+          ))}
+          {estimate && (
+            <div className="ml-auto hidden sm:flex items-center gap-3 bg-brand-500/10 border border-brand-500/20 px-4 py-1.5 rounded-full animate-in fade-in slide-in-from-right-4 duration-500">
+              <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">Valor Estimado:</span>
+              <span className="text-sm font-serif font-medium text-brand-300">R$ {Number(estimate).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
             </div>
           )}
+        </div>
 
-          <div className="w-full md:w-32 relative text-left">
-            <label className={labelStyle}>Passageiros</label>
-            <div className="relative">
-              <Users size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-steel-400" />
+        <form onSubmit={handleSubmit}>
+          <div className="flex flex-col lg:flex-row items-end gap-4">
+            <div className="flex-1 w-full text-left">
+              <CityInput
+                id="hero-from"
+                label="Origem"
+                labelClassName={labelStyle}
+                inputClassName={inputStyle + " pl-10"}
+                value={form.from}
+                onChange={v => update("from", v)}
+                onCoordinateSelect={c => { update("fromLat", c.lat); update("fromLon", c.lon); }}
+                placeholder="Saindo de onde?"
+              />
+            </div>
+            <div className="flex-1 w-full text-left">
+              <CityInput
+                id="hero-to"
+                label="Destino"
+                labelClassName={labelStyle}
+                inputClassName={inputStyle + " pl-10"}
+                value={form.to}
+                onChange={v => update("to", v)}
+                onCoordinateSelect={c => { update("toLat", c.lat); update("toLon", c.lon); }}
+                placeholder="Para onde vamos?"
+              />
+            </div>
+
+            <div className="w-full md:w-40 text-left">
+              <label className={labelStyle}>Data Ida</label>
               <input
-                type="number"
-                min="1"
-                max="15"
-                value={form.passengers}
-                onChange={e => update("passengers", e.target.value)}
-                className={inputStyle + " pl-10"}
-                placeholder="Qtd"
+                type="date"
+                value={form.date}
+                onChange={e => update("date", e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className={inputStyle + " px-3"}
                 required
               />
             </div>
-          </div>
 
-          <div className="w-full lg:w-auto">
-            <button type="submit" className="btn-primary py-4 px-8 whitespace-nowrap h-[54px] flex items-center justify-center gap-2 w-full text-xs font-bold tracking-widest uppercase">
-              <Search size={18} /> Simular
-            </button>
+            {tipo === "ida_volta" && (
+              <div className="w-full md:w-40 text-left shrink-0">
+                <label className={labelStyle}>Data Volta</label>
+                <input
+                  type="date"
+                  value={form.returnDate}
+                  onChange={e => update("returnDate", e.target.value)}
+                  min={form.date || new Date().toISOString().split("T")[0]}
+                  className={inputStyle + " px-3"}
+                  required={tipo === "ida_volta"}
+                />
+              </div>
+            )}
+
+            <div className="w-full md:w-32 relative text-left">
+              <label className={labelStyle}>Passageiros</label>
+              <div className="relative">
+                <Users size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-steel-400" />
+                <input
+                  type="number"
+                  min="1"
+                  max="15"
+                  value={form.passengers}
+                  onChange={e => update("passengers", e.target.value)}
+                  className={inputStyle + " pl-10"}
+                  placeholder="Qtd"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="w-full lg:w-auto">
+              <button type="submit" className="btn-primary py-4 px-8 whitespace-nowrap h-[54px] flex items-center justify-center gap-2 w-full text-xs font-bold tracking-widest uppercase">
+                <Search size={18} /> Simular
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
       </div>
     </div>
   );
