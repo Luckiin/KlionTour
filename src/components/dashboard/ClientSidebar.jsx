@@ -59,8 +59,8 @@ export default function ClientSidebar({
           <div className="absolute inset-0 bg-brand-gradient opacity-5 pointer-events-none" />
           
           <Link href="/painel" className="flex items-center gap-3 flex-1 min-w-0 relative z-10 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-900 flex items-center justify-center shrink-0 shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform">
-              <span className="font-serif text-white text-lg leading-none">K</span>
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-lg shadow-brand-500/10 group-hover:scale-110 transition-transform overflow-hidden">
+              <img src="/logo.png" alt="Klion Tour" className="w-full h-full object-contain" />
             </div>
             <AnimatePresence initial={false}>
               {!collapsed && (

@@ -61,8 +61,8 @@ export default function ClientSidebar({
         {/* Header da sidebar */}
         <div className="h-20 flex items-center gap-3 px-5 border-b border-surface-border dark:border-surface-dark-border">
           <Link href="/painel" className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-900 flex items-center justify-center shrink-0">
-              <span className="font-serif text-white text-lg leading-none">K</span>
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-lg shadow-brand-500/10">
+              <img src="/logo.png" alt="Klion Tour" className="w-full h-full object-contain" />
             </div>
             <AnimatePresence initial={false}>
               {!collapsed && (

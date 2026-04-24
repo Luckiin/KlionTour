@@ -240,7 +240,7 @@ export default function SimulationHeroForm() {
           {estimate && (
             <div className="ml-auto hidden sm:flex items-center gap-3 bg-brand-500/10 border border-brand-500/20 px-4 py-1.5 rounded-full animate-in fade-in slide-in-from-right-4 duration-500">
               <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">Valor Estimado:</span>
-              <span className="text-sm font-serif font-medium text-brand-300">R$ {Number(estimate).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+              <span className="text-sm font-serif font-medium text-brand-300">R$ {Number(estimate).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           )}
         </div>

@@ -48,8 +48,8 @@ export default function Footer() {
           {/* Marca */}
           <div>
             <Link href="/" className="flex items-center gap-3 mb-5 group">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-300 flex items-center justify-center">
-                <span className="font-serif text-white text-lg leading-none">K</span>
+              <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="Klion Tour" className="w-full h-full object-contain" />
               </div>
               <span className="font-serif text-xl tracking-tight">{APP_NAME}</span>
             </Link>

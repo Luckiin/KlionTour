@@ -12,6 +12,9 @@ export const metadata = {
   description:
     "Frete a van ideal para seu grupo. Conforto, segurança e preço justo.",
   keywords: ["fretamento", "van", "transporte", "viagem", "grupo"],
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export const viewport = {

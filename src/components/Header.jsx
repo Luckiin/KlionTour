@@ -53,8 +53,8 @@ export default function Header() {
       <div className={`container-x flex items-center justify-between transition-all duration-500 ${scrolled ? "h-14" : "h-16"}`}>
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/20 transition-transform group-hover:scale-110">
-            <span className="font-serif text-white text-lg leading-none">K</span>
+          <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-brand-500/10 transition-transform group-hover:scale-110 overflow-hidden">
+            <img src="/logo.png" alt="Klion Tour" className="w-full h-full object-contain" />
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-serif text-lg tracking-tight text-brand-900 dark:text-white">
@@ -68,9 +68,7 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
-          {!user && navItem("/", "Início")}
-          {!user && navItem("/sobre", "Sobre")}
-          {!user && navItem("/cotacao", "Cotação")}
+
 
           {user ? (
             <div className="flex items-center gap-5">
@@ -167,9 +165,7 @@ export default function Header() {
             className="md:hidden border-t border-surface-border dark:border-surface-dark-border bg-white/95 dark:bg-surface-dark/95 backdrop-blur-xl"
           >
             <div className="container-x py-5 flex flex-col gap-1">
-              {!user && <MLink href="/">Início</MLink>}
-              {!user && <MLink href="/sobre">Sobre</MLink>}
-              {!user && <MLink href="/cotacao">Cotação</MLink>}
+
 
               {user ? (
                 <>
