@@ -14,7 +14,6 @@ const NAV = [
   { href: "/painel",          icon: LayoutDashboard, label: "Visão Geral",     id: "painel" },
   { href: "/minhas-cotacoes",   icon: FileText,        label: "Minhas Cotações", id: "minhas-cotacoes" },
   { href: "/cotacao",         icon: Plus,            label: "Nova Cotação",    id: "cotacao" },
-  { href: "/configuracoes",   icon: Settings,        label: "Configurações",   id: "configuracoes" },
 ];
 
 export default function ClientSidebar({
@@ -115,55 +114,11 @@ export default function ClientSidebar({
           </div>
         </div>
 
-        {/* Perfil & Ações */}
-        <div className="p-3 bg-surface-subtle/50 dark:bg-surface-dark-subtle/30 border-t border-surface-border dark:border-surface-dark-border space-y-2">
-          <div className={`flex items-center gap-3 rounded-2xl p-2 bg-white dark:bg-surface-dark shadow-sm border border-brand-500/5 ${collapsed ? "justify-center" : ""}`}>
-            <div className="w-10 h-10 rounded-xl bg-brand-gradient flex items-center justify-center text-white font-serif text-lg shrink-0 shadow-md">
-              {user?.name?.[0]?.toUpperCase() || "C"}
-            </div>
-            <AnimatePresence initial={false}>
-              {!collapsed && (
-                <motion.div
-                  key="usr"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="min-w-0 flex-1 overflow-hidden"
-                >
-                  <div className="text-sm font-bold text-brand-900 dark:text-white truncate leading-none mb-1">
-                    {user?.name?.split(' ')[0]}
-                  </div>
-                  <div className="text-[10px] font-medium text-steel-500 truncate flex items-center gap-1">
-                    Cliente KlionTour <Sparkles size={8} className="text-brand-500" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="flex gap-1">
-            <button
-              onClick={onLogout}
-              className={`flex-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-red-500 hover:bg-red-500/10 transition-colors ${
-                collapsed ? "justify-center" : ""
-              }`}
-            >
-              <LogOut size={16} className="shrink-0" />
-              {!collapsed && <span>Sair</span>}
-            </button>
-            <button
-              className={`flex items-center justify-center rounded-xl px-3 py-2.5 text-steel-500 hover:bg-brand-500/10 transition-colors ${
-                collapsed ? "hidden" : "flex"
-              }`}
-            >
-              <Settings size={16} />
-            </button>
-          </div>
-
-          {/* Collapse toggle (só desktop) */}
+        {/* Toggle Collapse (só desktop) */}
+        <div className="p-3 border-t border-surface-border dark:border-surface-dark-border">
           <button
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden lg:flex w-full items-center justify-center rounded-xl p-2 text-steel-400 hover:text-brand-500 hover:bg-brand-500/5 transition-all"
+            className="hidden lg:flex w-full items-center justify-center rounded-xl p-2.5 text-steel-400 hover:text-brand-500 hover:bg-brand-500/5 transition-all"
             aria-label="Recolher menu"
           >
             <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.4 }}>

@@ -13,8 +13,13 @@ export default function SimulationHeroForm() {
     from: "", to: "", fromLat: "", fromLon: "", toLat: "", toLon: "",
     date: "", returnDate: "", passengers: ""
   });
+  const [estimate, setEstimate] = useState(null);
 
-  const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const update = (k, v) => {
+    let val = v;
+    if (k === "passengers" && v > 15) val = "15";
+    setForm((p) => ({ ...p, [k]: val }));
+  };
 
   useEffect(() => {
     let active = true;
@@ -30,10 +35,39 @@ export default function SimulationHeroForm() {
     };
   }, []);
 
+  useEffect(() => {
+    const hasDates = form.date && (tipo !== "ida_volta" || form.returnDate);
+    const hasPassengers = form.passengers && parseInt(form.passengers) > 0;
+
+    if (form.fromLat && form.fromLon && form.toLat && form.toLon && hasDates && hasPassengers) {
+      const R = 6371;
+      const lat1 = parseFloat(form.fromLat);
+      const lon1 = parseFloat(form.fromLon);
+      const lat2 = parseFloat(form.toLat);
+      const lon2 = parseFloat(form.toLon);
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distancia = (R * c) * 1.3;
+      
+      const { price } = calculateTransportQuote(distancia, tipo, gasPricePerKm ?? undefined);
+      setEstimate(price);
+    } else {
+      setEstimate(null);
+    }
+  }, [form.fromLat, form.fromLon, form.toLat, form.toLon, form.date, form.returnDate, form.passengers, tipo, gasPricePerKm]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.from || !form.to || !form.date || !form.passengers) {
       alert("Preencha os campos obrigatórios: origem, destino, data de ida e passageiros.");
+      return;
+    }
+    if (parseInt(form.passengers) > 15) {
+      alert("O limite máximo é de 15 passageiros por van.");
       return;
     }
 
@@ -184,8 +218,8 @@ export default function SimulationHeroForm() {
     <div className="relative group/form">
       <div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 to-brand-900/20 rounded-[2rem] blur-2xl opacity-0 group-hover/form:opacity-100 transition duration-1000"></div>
 
-      <div className="relative bg-[#0c1220]/60 backdrop-blur-3xl p-6 md:p-10 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-7xl mx-auto">
-      <div className="flex flex-wrap items-center gap-2 mb-6">
+      <div className="relative bg-[#0c1220]/60 backdrop-blur-3xl p-6 md:p-8 rounded-[2rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] w-full max-w-7xl mx-auto">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         {tabs.map(t => (
           <button
             key={t.id}
@@ -203,10 +237,16 @@ export default function SimulationHeroForm() {
             {t.label}
           </button>
         ))}
+        {estimate && (
+          <div className="ml-auto hidden sm:flex items-center gap-3 bg-brand-500/10 border border-brand-500/20 px-4 py-1.5 rounded-full animate-in fade-in slide-in-from-right-4 duration-500">
+             <span className="text-[9px] font-bold text-brand-500 uppercase tracking-widest">Valor Estimado:</span>
+             <span className="text-sm font-serif font-medium text-brand-300">R$ {Number(estimate).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="flex flex-col lg:flex-row items-end gap-5">
+        <div className="flex flex-col lg:flex-row items-end gap-4">
           <div className="flex-1 w-full text-left">
             <CityInput
               id="hero-from"

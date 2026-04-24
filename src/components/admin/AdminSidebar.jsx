@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,7 +27,6 @@ const NAV = [
   { href: "/admin/clientes",    icon: Users,            label: "Clientes"    },
   { href: "/admin/motoristas",  icon: UserCheck,        label: "Motoristas"  },
   { href: "/admin/veiculos",    icon: Bus,              label: "Veículos"    },
-  { href: "/admin/configuracoes", icon: Settings,       label: "Configurações" },
 ];
 
 export default function AdminSidebar({
@@ -39,7 +38,16 @@ export default function AdminSidebar({
   onLogout,
 }) {
   const pathname = usePathname();
-  const width = collapsed ? "lg:w-[88px]" : "lg:w-72";
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1280);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const width = collapsed ? "xl:w-[88px]" : "xl:w-72";
 
   return (
     <>
@@ -51,21 +59,21 @@ export default function AdminSidebar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-brand-900/40 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-brand-900/40 backdrop-blur-sm xl:hidden"
           />
         )}
       </AnimatePresence>
 
       <motion.aside
         initial={false}
-        animate={{ x: mobileOpen ? 0 : undefined }}
+        animate={{ x: (mobileOpen || isDesktop) ? 0 : "-100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
         className={`
-          fixed inset-y-0 left-0 z-[60] w-72 flex flex-col
+          fixed inset-y-0 left-0 z-[60] w-[280px] sm:w-72 flex flex-col
           bg-white dark:bg-surface-dark-elevated
           border-r border-surface-border dark:border-surface-dark-border
-          transition-all duration-500 ease-in-out
-          ${mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
-          lg:translate-x-0 ${width}
+          xl:translate-x-0 ${width}
+          ${mobileOpen ? "shadow-2xl" : ""}
         `}
       >
         {/* Header da sidebar */}
@@ -98,7 +106,7 @@ export default function AdminSidebar({
           {/* Botão fechar mobile - mais visível e fácil de tocar */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-2.5 rounded-xl text-steel-500 hover:bg-brand-500/10 active:scale-95 transition-all"
+            className="xl:hidden p-2.5 rounded-xl text-steel-500 hover:bg-brand-500/10 active:scale-95 transition-all"
             aria-label="Fechar menu"
           >
             <X size={20} />
@@ -156,48 +164,11 @@ export default function AdminSidebar({
           <FinanceiroMenu collapsed={collapsed} pathname={pathname} setMobileOpen={setMobileOpen} />
         </nav>
 
-        {/* Rodapé: usuário + toggle collapse */}
-        <div className="border-t border-surface-border dark:border-surface-dark-border p-3 space-y-2">
-          <div className={`flex items-center gap-3 rounded-2xl p-2 ${collapsed ? "justify-center" : ""}`}>
-            <div className="w-10 h-10 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-500 dark:text-brand-300 font-semibold shrink-0">
-              {user?.name?.[0]?.toUpperCase() || "A"}
-            </div>
-            <AnimatePresence initial={false}>
-              {!collapsed && (
-                <motion.div
-                  key="usr"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="min-w-0 flex-1 overflow-hidden"
-                >
-                  <div className="text-sm font-medium text-brand-900 dark:text-white truncate">
-                    {user?.name}
-                  </div>
-                  <div className="text-xs text-steel-500 truncate">
-                    {user?.email}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <button
-            onClick={onLogout}
-            className={`w-full flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-steel-500 hover:text-red-500 hover:bg-red-500/10 transition ${
-              collapsed ? "justify-center" : ""
-            }`}
-            title={collapsed ? "Sair" : undefined}
-          >
-            <LogOut size={16} className="shrink-0" />
-            {!collapsed && <span>Sair</span>}
-          </button>
-
-          {/* Collapse toggle (só desktop) */}
+        {/* Toggle Collapse (só desktop) */}
+        <div className="p-3 border-t border-surface-border dark:border-surface-dark-border">
           <button
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden lg:flex w-full items-center justify-center rounded-2xl p-2 text-steel-500 hover:bg-brand-500/10 transition"
+            className="hidden xl:flex w-full items-center justify-center rounded-2xl p-2.5 text-steel-500 hover:bg-brand-500/10 transition-all"
             aria-label="Recolher menu"
           >
             <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.3 }}>

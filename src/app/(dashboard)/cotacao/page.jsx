@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Users, CheckCircle, Shield, Loader2, MapPin, Calendar, ArrowRight } from "lucide-react";
 import CityInput from "@/components/CityInput";
@@ -22,8 +23,13 @@ export default function CotacaoDashboardPage() {
 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [estimate, setEstimate] = useState(null);
 
-  const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const update = (k, v) => {
+    let val = v;
+    if (k === "passengers" && v > 15) val = "15";
+    setForm((p) => ({ ...p, [k]: val }));
+  };
 
   useEffect(() => {
     let active = true;
@@ -38,6 +44,31 @@ export default function CotacaoDashboardPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const hasDates = form.date && (tipo !== "ida_volta" || form.returnDate);
+    const hasPassengers = form.passengers && parseInt(form.passengers) > 0;
+
+    if (form.fromLat && form.fromLon && form.toLat && form.toLon && hasDates && hasPassengers) {
+      const R = 6371;
+      const lat1 = parseFloat(form.fromLat);
+      const lon1 = parseFloat(form.fromLon);
+      const lat2 = parseFloat(form.toLat);
+      const lon2 = parseFloat(form.toLon);
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distancia = (R * c) * 1.3;
+      
+      const { price } = calculateTransportQuote(distancia, tipo, gasPricePerKm ?? undefined);
+      setEstimate(price);
+    } else {
+      setEstimate(null);
+    }
+  }, [form.fromLat, form.fromLon, form.toLat, form.toLon, form.date, form.returnDate, form.passengers, tipo, gasPricePerKm]);
 
   if (submitted) {
     return (
@@ -73,6 +104,10 @@ export default function CotacaoDashboardPage() {
     e.preventDefault();
     if (!form.from || !form.to || !form.date || !form.passengers) {
       alert("Preencha os campos obrigatórios.");
+      return;
+    }
+    if (parseInt(form.passengers) > 15) {
+      alert("O limite máximo é de 15 passageiros por van.");
       return;
     }
 
@@ -259,6 +294,35 @@ export default function CotacaoDashboardPage() {
               placeholder="Ex: Cadeira de bebê, bagagem extra, paradas solicitadas no caminho..."
             />
           </div>
+
+          <AnimatePresence>
+            {estimate && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/30">
+                      <Shield size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-brand-900 dark:text-white uppercase tracking-[0.2em]">Estimativa de Viagem</h4>
+                      <p className="text-xs text-steel-500 mt-0.5">Valor aproximado baseado na rota e tipo de serviço</p>
+                    </div>
+                  </div>
+                  <div className="text-center md:text-right">
+                    <div className="text-3xl md:text-4xl font-serif font-medium text-brand-600 dark:text-brand-300">
+                      R$ {Number(estimate).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </div>
+                    <p className="text-[9px] font-bold text-steel-400 uppercase tracking-widest mt-1">Sujeito a alteração após análise</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="pt-8 border-t border-surface-border dark:border-surface-dark-border flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3 text-steel-500">

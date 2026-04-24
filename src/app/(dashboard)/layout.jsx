@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Search, Bell, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import ClientSidebar from "@/components/dashboard/ClientSidebar";
+import UserNotificationDropdown from "@/components/dashboard/UserNotificationDropdown";
+import UserDropdown from "@/components/dashboard/UserDropdown";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const TITLES = {
@@ -102,21 +104,11 @@ export default function DashboardLayout({ children }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <button className="relative w-11 h-11 rounded-2xl border border-surface-border dark:border-surface-dark-border bg-white dark:bg-surface-dark-elevated flex items-center justify-center text-brand-900 dark:text-white hover:bg-brand-500/10 transition-all group">
-                <Bell size={18} className="group-hover:rotate-12 transition-transform" />
-                <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-brand-500 animate-pulse border-2 border-white dark:border-surface-dark-elevated" />
-              </button>
+              <UserNotificationDropdown />
               <ThemeToggle />
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 pl-4 border-l border-surface-border dark:border-surface-dark-border ml-2">
-               <div className="flex flex-col items-end leading-none">
-                 <span className="text-[10px] font-bold text-steel-400 uppercase tracking-widest mb-1">Status</span>
-                 <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
-                   ONLINE <Sparkles size={8} />
-                 </span>
-               </div>
-            </div>
+            <UserDropdown />
           </div>
         </header>
 

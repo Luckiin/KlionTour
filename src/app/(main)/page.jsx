@@ -66,7 +66,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:60px_60px]" />
         </div>
 
-        <div className="container-x relative z-10 w-full flex flex-col items-center text-center pt-20 pb-48">
+        <div className="container-x relative z-10 w-full flex flex-col items-center text-center pt-16 pb-24 md:pb-28">
           <Reveal direction="fade" duration={0.8}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs tracking-[0.22em] uppercase font-medium text-white bg-white/10 border border-white/20 backdrop-blur-md mb-8">
               <Sparkles size={13} className="text-brand-300" />
@@ -90,7 +90,7 @@ export default function HomePage() {
             />
 
             <Reveal direction="up" delay={1.1} duration={0.8}>
-              <p className="mt-8 lead !text-white/80 max-w-2xl">
+              <p className="mt-6 lead !text-white/80 max-w-2xl">
                 Frete a van ideal para a sua viagem sem complicações.
                 Cotação instantânea, motoristas qualificados e um cuidado
                 que você sente do primeiro clique ao destino final.
@@ -98,7 +98,7 @@ export default function HomePage() {
             </Reveal>
 
             <Reveal direction="up" delay={1.3} duration={0.7}>
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-6">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-6">
                 <Link href="#simular" className="btn-primary text-base px-10 py-4 shadow-glow-blue scale-110">
                   Simular viagem <ArrowRight size={18} />
                 </Link>
@@ -122,10 +122,10 @@ export default function HomePage() {
       </section>
 
       {/* Espaço maior para acomodar o simulador e evitar o "vazio escuro" */}
-      <div className="h-64 md:h-80" />
+      <div className="h-20 md:h-24" />
 
       {/* =============== STATS =============== */}
-      <section className="container-x py-20 md:py-28">
+      <section className="container-x pt-10 pb-12 md:pt-12 md:pb-16">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-6">
           {STATS.map((s, i) => (
             <Reveal key={i} direction="up" delay={i * 0.1}>
@@ -143,7 +143,7 @@ export default function HomePage() {
       </section>
 
       {/* =============== COMO FUNCIONA =============== */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      <section className="relative pt-12 pb-12 md:pt-16 md:pb-16 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-brand-50/60 dark:bg-surface-dark-elevated/40" />
         <div className="absolute inset-x-0 top-0 h-px hr-fancy" />
 
@@ -151,7 +151,7 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <Reveal>
               <span className="eyebrow">Processo</span>
-              <h2 className="display-2 mt-4">
+              <h2 className="display-2 mt-3">
                 Simples, transparente,
                 <em className="not-italic text-brand-500 dark:text-brand-300"> sem complicação.</em>
               </h2>
@@ -161,7 +161,7 @@ export default function HomePage() {
             </Reveal>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px mt-16 bg-surface-border dark:bg-surface-dark-border overflow-hidden rounded-3xl border border-surface-border dark:border-surface-dark-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px mt-10 bg-surface-border dark:bg-surface-dark-border overflow-hidden rounded-3xl border border-surface-border dark:border-surface-dark-border">
             {HOW_IT_WORKS.map((item, i) => (
               <Reveal key={i} direction="up" delay={i * 0.08}>
                 <div className="group relative h-full bg-surface-elevated dark:bg-surface-dark-elevated p-8 md:p-10 transition-all duration-500 hover:bg-brand-500 hover:text-white">
@@ -187,7 +187,7 @@ export default function HomePage() {
       </section>
 
       {/* =============== ROTAS POPULARES =============== */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      <section className="relative pt-12 pb-12 md:pt-16 md:pb-16 overflow-hidden">
         <div className="container-x">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
             <Reveal>
@@ -255,7 +255,7 @@ export default function HomePage() {
       </section>
 
       {/* =============== DEPOIMENTOS =============== */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      <section className="relative pt-12 pb-12 md:pt-16 md:pb-16 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-brand-50/50 to-transparent dark:via-surface-dark-elevated/30" />
 
         <div className="container-x">
@@ -300,10 +300,10 @@ export default function HomePage() {
       </section>
 
       {/* =============== CTA FINAL =============== */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      <section className="relative pt-12 pb-20 md:pt-16 md:pb-24 overflow-hidden">
         <div className="container-x">
           <Reveal>
-            <div className="relative overflow-hidden rounded-[2.5rem] bg-brand-gradient text-white p-10 md:p-20 shadow-soft-lg">
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-brand-gradient text-white p-8 md:p-14 shadow-soft-lg">
               <div className="absolute inset-0 pointer-events-none opacity-40">
                 <Parallax amount={40} className="absolute -top-20 -right-20 w-[480px] h-[480px] rounded-full bg-white/10 blur-3xl" />
                 <div className="absolute inset-0 bg-grid-dark bg-[size:48px_48px] opacity-20" />

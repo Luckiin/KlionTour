@@ -21,9 +21,9 @@ export default function Footer() {
         <div className="absolute inset-0 bg-grid-dark bg-[size:48px_48px] opacity-30" />
       </div>
 
-      <div className="container-x py-20 relative z-10">
+      <div className="container-x py-8 relative z-10">
         {/* CTA topo */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-12 border-b border-white/10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-white/10">
           <div>
             <p className="eyebrow !text-brand-300">Vamos viajar juntos?</p>
             <h3 className="font-serif font-light text-4xl md:text-5xl mt-4 max-w-xl leading-tight">
@@ -44,7 +44,7 @@ export default function Footer() {
         </div>
 
         {/* Colunas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 py-10">
           {/* Marca */}
           <div>
             <Link href="/" className="flex items-center gap-3 mb-5 group">

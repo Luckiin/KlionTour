@@ -50,7 +50,7 @@ export default function Header() {
           : "bg-transparent border-b border-transparent"
       }`}
     >
-      <div className={`container-x flex items-center justify-between transition-all duration-500 ${scrolled ? "h-16" : "h-20"}`}>
+      <div className={`container-x flex items-center justify-between transition-all duration-500 ${scrolled ? "h-14" : "h-16"}`}>
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-900 flex items-center justify-center">

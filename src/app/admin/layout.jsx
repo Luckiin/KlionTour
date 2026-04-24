@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { ShieldAlert, Menu, Search, Bell } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import NotificationDropdown from "@/components/admin/NotificationDropdown";
+import UserDropdown from "@/components/dashboard/UserDropdown";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const TITLES = {
@@ -51,7 +53,7 @@ export default function AdminLayout({ children }) {
   }
 
   const title = TITLES[pathname] || { label: "Admin", eyebrow: "KlionTour" };
-  const contentOffset = collapsed ? "lg:pl-[88px]" : "lg:pl-72";
+  const contentOffset = collapsed ? "xl:pl-[88px]" : "xl:pl-72";
 
   return (
     <div className="min-h-screen bg-surface dark:bg-surface-dark text-brand-900 dark:text-white">
@@ -70,7 +72,7 @@ export default function AdminLayout({ children }) {
           <div className="h-16 md:h-20 px-4 sm:px-6 md:px-8 flex items-center gap-4">
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-2 rounded-xl border border-surface-border dark:border-surface-dark-border text-brand-900 dark:text-white hover:bg-brand-500/10 transition"
+              className="xl:hidden p-2 rounded-xl border border-surface-border dark:border-surface-dark-border text-brand-900 dark:text-white hover:bg-brand-500/10 transition"
               aria-label="Abrir menu"
             >
               <Menu size={18} />
@@ -97,12 +99,9 @@ export default function AdminLayout({ children }) {
               </kbd>
             </div>
 
-            <button className="relative w-10 h-10 rounded-full border border-surface-border dark:border-surface-dark-border bg-white/70 dark:bg-surface-dark-elevated/70 flex items-center justify-center text-brand-900 dark:text-white hover:bg-brand-500/10 transition">
-              <Bell size={16} />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-500" />
-            </button>
-
+            <NotificationDropdown />
             <ThemeToggle />
+            <UserDropdown />
           </div>
         </header>
 
